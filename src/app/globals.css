@@ -1,26 +1,54 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --navy: #0f172a;
+  --green: #16a34a;
+  --gold: #eab308;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-navy: #0f172a;
+  --color-navy-800: #1e293b;
+  --color-solar: #16a34a;
+  --color-gold: #eab308;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-instrument);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+}
+
+.hero-mesh {
+  background:
+    radial-gradient(ellipse 70% 50% at 90% -20%, rgba(234, 179, 8, 0.22), transparent 55%),
+    radial-gradient(ellipse 45% 40% at 0% 100%, rgba(22, 163, 74, 0.16), transparent 50%),
+    linear-gradient(180deg, #0b1220 0%, #0f172a 55%, #111827 100%);
+}
+
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.touch-btn {
+  min-height: 48px;
+  min-width: 48px;
 }
