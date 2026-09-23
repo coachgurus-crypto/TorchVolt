@@ -1,0 +1,4 @@
+ALTER TABLE contents ADD COLUMN seo_title TEXT NOT NULL DEFAULT '';
+ALTER TABLE contents ADD COLUMN meta_description TEXT NOT NULL DEFAULT '';
+ALTER TABLE contents ADD COLUMN featured_image TEXT NOT NULL DEFAULT '';
+ALTER TABLE contents ADD COLUMN tags_json TEXT NOT NULL DEFAULT '[]';

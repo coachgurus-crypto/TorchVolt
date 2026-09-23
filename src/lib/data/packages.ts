@@ -34,7 +34,7 @@ export const PACKAGES: SolarPackage[] = [
   {
     id: "tv-8.0",
     name: "Whole-Home 8kW",
-    tagline: "Two ACs, borehole pump and all-day lithium.",
+    tagline: "Two ACs, borehole pump and all-day backup.",
     inverterKw: 8,
     inverterSurgeW: 16000,
     inverterBrand: "Growatt",
@@ -49,7 +49,7 @@ export const PACKAGES: SolarPackage[] = [
   {
     id: "tv-10",
     name: "Estate / Duplex 10kW",
-    tagline: "Heavy load, long autonomy, serious roof array.",
+    tagline: "Bigger homes — longer backup and a larger roof setup.",
     inverterKw: 10,
     inverterSurgeW: 20000,
     inverterBrand: "Growatt",

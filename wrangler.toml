@@ -1,4 +1,4 @@
-# Cloudflare Pages — static Next.js export
+# Cloudflare Pages — static Next.js export + Functions API
 # Build command: npm run build
 # Build output directory: out
 # Node version: 20+
@@ -6,3 +6,9 @@
 name = "torchvolt"
 compatibility_date = "2025-09-18"
 pages_build_output_dir = "out"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "torchvolt-leads"
+database_id = "f2474dfc-fa2a-4fe1-bfca-8f5eecb1c3c5"

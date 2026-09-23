@@ -52,3 +52,178 @@ body {
   min-height: 48px;
   min-width: 48px;
 }
+
+.blog-prose {
+  color: #334155;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+
+.blog-prose h1,
+.blog-prose h2,
+.blog-prose h3 {
+  color: #0f172a;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 1.75rem 0 0.75rem;
+}
+
+.blog-prose h2 {
+  font-size: 1.5rem;
+}
+
+.blog-prose h3 {
+  font-size: 1.2rem;
+}
+
+.blog-prose p {
+  margin: 0 0 1rem;
+}
+
+.blog-prose ul,
+.blog-prose ol {
+  margin: 0 0 1rem 1.25rem;
+}
+
+.blog-prose li {
+  margin: 0.35rem 0;
+}
+
+.blog-prose a {
+  color: #16a34a;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.blog-prose code {
+  border-radius: 0.35rem;
+  background: #f1f5f9;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.9em;
+  padding: 0.1rem 0.35rem;
+}
+
+.blog-prose pre {
+  margin: 0 0 1.25rem;
+  overflow-x: auto;
+  border-radius: 1rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 1rem 1.1rem;
+}
+
+.blog-prose pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.blog-prose strong {
+  color: #0f172a;
+  font-weight: 650;
+}
+
+.blog-prose blockquote {
+  margin: 1.5rem 0;
+  border-left: 4px solid #eab308;
+  padding-left: 1rem;
+  color: #475569;
+  font-style: italic;
+}
+
+.blog-prose blockquote cite {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  font-style: normal;
+  color: #64748b;
+}
+
+.blog-prose figure {
+  margin: 1.5rem 0;
+}
+
+.blog-prose figure img {
+  width: 100%;
+  border-radius: 0.75rem;
+}
+
+.blog-prose figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.blog-prose hr {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* —— Admin studio (Linear / Notion) —— */
+.admin-studio {
+  min-height: 100vh;
+  background: #09090b;
+  color: #f4f4f5;
+  font-feature-settings: "ss01" on, "cv11" on;
+}
+
+.admin-studio input,
+.admin-studio textarea,
+.admin-studio select,
+.admin-studio button {
+  font-family: inherit;
+}
+
+.studio-drawer {
+  transform: translateX(100%);
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.studio-drawer.is-open {
+  transform: translateX(0);
+}
+
+.studio-backdrop {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.studio-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.studio-plus {
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), background 180ms ease,
+    border-color 180ms ease, color 180ms ease;
+}
+
+.studio-plus.is-open {
+  transform: rotate(45deg);
+}
+
+@keyframes studio-pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.studio-pop {
+  animation: studio-pop 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.studio-field:focus {
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.55);
+}
+
+
+

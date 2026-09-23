@@ -1,0 +1,4 @@
+/blog/* /view/index.html 200
+/:slug /view/index.html 200
+/:parent/:child /view/index.html 200
+/:a/:b/:c /view/index.html 200

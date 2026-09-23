@@ -4,6 +4,13 @@ export type GridProfileId =
   | "night_only"
   | "daytime_shop";
 
+export interface ApplianceSize {
+  id: string;
+  label: string;
+  runningWatts: number;
+  surgeMultiplier?: number;
+}
+
 export interface Appliance {
   id: string;
   name: string;
@@ -17,6 +24,10 @@ export interface Appliance {
   note: string;
   hoursByProfile: Record<GridProfileId, number>;
   dutyCycle: number;
+  /** HP / size choices for heavier appliances */
+  sizes?: ApplianceSize[];
+  defaultSizeId?: string;
+  sizePrompt?: string;
 }
 
 export interface QuoteLine {
@@ -32,6 +43,7 @@ export interface Quote {
   createdAt: string;
   city: string;
   quantities: Record<string, number>;
+  sizes: Record<string, string>;
   gridProfileId: GridProfileId;
   packageId: string;
   peakLoadW: number;

@@ -1,4 +1,4 @@
-import type { Appliance, GridProfileId } from "@/lib/types";
+import type { Appliance, ApplianceSize, GridProfileId } from "@/lib/types";
 
 export const GRID_PROFILES: {
   id: GridProfileId;
@@ -40,15 +40,15 @@ export const GRID_PROFILES: {
 export const APPLIANCES: Appliance[] = [
   {
     id: "inverter_ac",
-    name: "Inverter AC (1.5HP)",
-    localLabel: "Split inverter — not compressor AC",
+    name: "Inverter AC",
+    localLabel: "Split AC for the room",
     runningWatts: 1500,
     surgeMultiplier: 1.35,
     defaultQty: 0,
     minQty: 0,
     maxQty: 6,
     qtyStep: 1,
-    note: "Running 1,500W. Inverter compressors surge ~1.35×, not 3×.",
+    note: "Pick the HP on the outdoor unit label.",
     hoursByProfile: {
       outages_24_7: 8,
       few_hours: 5,
@@ -56,18 +56,26 @@ export const APPLIANCES: Appliance[] = [
       daytime_shop: 6,
     },
     dutyCycle: 0.7,
+    sizePrompt: "What HP is the AC?",
+    defaultSizeId: "1_5",
+    sizes: [
+      { id: "1", label: "1 HP", runningWatts: 900 },
+      { id: "1_5", label: "1.5 HP", runningWatts: 1500 },
+      { id: "2", label: "2 HP", runningWatts: 1900 },
+      { id: "2_5", label: "2.5 HP", runningWatts: 2300 },
+    ],
   },
   {
     id: "fridge",
-    name: "Double-Door Refrigerator",
-    localLabel: "Thermocool-class fridge/freezer",
+    name: "Refrigerator",
+    localLabel: "Fridge or fridge-freezer",
     runningWatts: 300,
     surgeMultiplier: 3.5,
     defaultQty: 1,
     minQty: 0,
     maxQty: 4,
     qtyStep: 1,
-    note: "Running 300W. Compressor start ~1,050W — sized into surge headroom.",
+    note: "Bigger fridge-freezers draw more when the compressor kicks in.",
     hoursByProfile: {
       outages_24_7: 24,
       few_hours: 24,
@@ -75,10 +83,18 @@ export const APPLIANCES: Appliance[] = [
       daytime_shop: 24,
     },
     dutyCycle: 0.38,
+    sizePrompt: "What size is the fridge?",
+    defaultSizeId: "double",
+    sizes: [
+      { id: "small", label: "Small / single door", runningWatts: 150, surgeMultiplier: 3 },
+      { id: "double", label: "Double-door", runningWatts: 300, surgeMultiplier: 3.5 },
+      { id: "large", label: "Large / side-by-side", runningWatts: 450, surgeMultiplier: 3.5 },
+      { id: "freezer", label: "Deep freezer", runningWatts: 400, surgeMultiplier: 4 },
+    ],
   },
   {
     id: "pump",
-    name: "Water Pumping Machine (1HP)",
+    name: "Water Pumping Machine",
     localLabel: "Borehole or surface pump",
     runningWatts: 900,
     surgeMultiplier: 4,
@@ -86,7 +102,7 @@ export const APPLIANCES: Appliance[] = [
     minQty: 0,
     maxQty: 2,
     qtyStep: 1,
-    note: "Running 900W. Induction start can hit ~3,600W for a few seconds.",
+    note: "Check the HP stamped on the pump or nameplate.",
     hoursByProfile: {
       outages_24_7: 1.5,
       few_hours: 1.2,
@@ -94,6 +110,40 @@ export const APPLIANCES: Appliance[] = [
       daytime_shop: 0.8,
     },
     dutyCycle: 1,
+    sizePrompt: "What HP is the pump?",
+    defaultSizeId: "1",
+    sizes: [
+      { id: "0_5", label: "0.5 HP", runningWatts: 400 },
+      { id: "1", label: "1 HP", runningWatts: 900 },
+      { id: "1_5", label: "1.5 HP", runningWatts: 1200 },
+      { id: "2", label: "2 HP", runningWatts: 1500 },
+    ],
+  },
+  {
+    id: "washer",
+    name: "Washing Machine",
+    localLabel: "Automatic or semi-auto",
+    runningWatts: 500,
+    surgeMultiplier: 2.5,
+    defaultQty: 0,
+    minQty: 0,
+    maxQty: 2,
+    qtyStep: 1,
+    note: "Motor size is usually on the back label.",
+    hoursByProfile: {
+      outages_24_7: 1.5,
+      few_hours: 1,
+      night_only: 1,
+      daytime_shop: 0.5,
+    },
+    dutyCycle: 0.6,
+    sizePrompt: "About what size / power?",
+    defaultSizeId: "mid",
+    sizes: [
+      { id: "small", label: "Small (~300W)", runningWatts: 300, surgeMultiplier: 2 },
+      { id: "mid", label: "Medium (~500W)", runningWatts: 500, surgeMultiplier: 2.5 },
+      { id: "1hp", label: "About 1 HP", runningWatts: 750, surgeMultiplier: 3 },
+    ],
   },
   {
     id: "tv",
@@ -175,4 +225,40 @@ export const APPLIANCES: Appliance[] = [
 
 export function defaultQuantities(): Record<string, number> {
   return Object.fromEntries(APPLIANCES.map((a) => [a.id, 0]));
+}
+
+export function defaultSizes(): Record<string, string> {
+  return Object.fromEntries(
+    APPLIANCES.filter((a) => a.sizes?.length).map((a) => [
+      a.id,
+      a.defaultSizeId ?? a.sizes![0].id,
+    ]),
+  );
+}
+
+export function resolveSize(
+  appliance: Appliance,
+  sizeId?: string,
+): ApplianceSize | null {
+  if (!appliance.sizes?.length) return null;
+  const id = sizeId ?? appliance.defaultSizeId ?? appliance.sizes[0].id;
+  return appliance.sizes.find((s) => s.id === id) ?? appliance.sizes[0];
+}
+
+export function applianceWatts(
+  appliance: Appliance,
+  sizeId?: string,
+): { runningWatts: number; surgeMultiplier: number; sizeLabel?: string } {
+  const size = resolveSize(appliance, sizeId);
+  if (!size) {
+    return {
+      runningWatts: appliance.runningWatts,
+      surgeMultiplier: appliance.surgeMultiplier,
+    };
+  }
+  return {
+    runningWatts: size.runningWatts,
+    surgeMultiplier: size.surgeMultiplier ?? appliance.surgeMultiplier,
+    sizeLabel: size.label,
+  };
 }

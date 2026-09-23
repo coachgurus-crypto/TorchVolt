@@ -10,8 +10,14 @@ export function SiteHeader() {
         <Logo />
         <nav className="flex items-center gap-2 sm:gap-3">
           <Link
-            href="/#how"
+            href="/blog"
             className="hidden rounded-full px-3.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-navy sm:inline-flex"
+          >
+            Blog
+          </Link>
+          <Link
+            href="/#how"
+            className="hidden rounded-full px-3.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-navy md:inline-flex"
           >
             How it works
           </Link>
@@ -19,7 +25,7 @@ export function SiteHeader() {
             href="/#size"
             className="inline-flex h-11 items-center rounded-full bg-navy px-5 text-sm font-semibold text-white"
           >
-            Size my system
+            Get a free quote
           </Link>
         </nav>
       </div>

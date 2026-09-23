@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
-import { SiteFooter } from "@/components/SiteFooter";
-import { SiteHeader } from "@/components/SiteHeader";
+import { SiteChrome } from "@/components/SiteChrome";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,11 +22,11 @@ const instrument = Instrument_Serif({
 
 export const metadata: Metadata = {
   title: {
-    default: "TorchVolt — Know what you need before you buy solar",
+    default: "TorchVolt — Solar for your home or office, with a free quote",
     template: "%s · TorchVolt",
   },
   description:
-    "Choose your appliances and TorchVolt estimates inverter, lithium and panel capacity. Get a quotation after the estimate.",
+    "Tell us what you need to keep running at home or in the office. TorchVolt recommends a package and sends you a free quote.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -37,9 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} ${instrument.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-slate-50 text-navy">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
+        <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
   );

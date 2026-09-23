@@ -17,13 +17,20 @@ import {
   Snowflake,
   Sun,
   Tv,
+  WashingMachine,
   Wifi,
   Zap,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { BRAND, telUrl, whatsappUrl } from "@/lib/constants";
-import { APPLIANCES, GRID_PROFILES } from "@/lib/data/appliances";
+import { telUrl, whatsappUrl } from "@/lib/constants";
+import {
+  APPLIANCES,
+  GRID_PROFILES,
+  applianceWatts,
+  defaultSizes,
+} from "@/lib/data/appliances";
 import { formatKwh, formatWatts } from "@/lib/format";
+import { submitLead } from "@/lib/leads";
 import { buildQuote, estimateWhatsAppText, recommendPackage } from "@/lib/sizing";
 import { saveDraft, type SiteKind } from "@/lib/storage";
 import type { GridProfileId } from "@/lib/types";
@@ -31,12 +38,13 @@ import type { GridProfileId } from "@/lib/types";
 const SCREENS = ["who", "city", "grid", "loads", "generator", "result"] as const;
 type Screen = (typeof SCREENS)[number];
 
-const CITIES = ["Lagos", "Abuja", "Port Harcourt", "Ibadan", "Kano", "Benin"];
+const CITIES = ["Ibadan", "Lagos", "Abuja"];
 
 const ICONS: Record<string, ReactNode> = {
   inverter_ac: <Snowflake className="h-5 w-5" />,
   fridge: <Refrigerator className="h-5 w-5" />,
   pump: <Droplets className="h-5 w-5" />,
+  washer: <WashingMachine className="h-5 w-5" />,
   tv: <Tv className="h-5 w-5" />,
   fans: <Fan className="h-5 w-5" />,
   lights: <Lightbulb className="h-5 w-5" />,
@@ -52,13 +60,20 @@ function emptyQty() {
 
 export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
   const [screen, setScreen] = useState<Screen>("who");
-  const [city, setCity] = useState("Lagos");
+  const [city, setCity] = useState("Ibadan");
   const [siteKind, setSiteKind] = useState<SiteKind | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>(emptyQty);
+  const [sizes, setSizes] = useState<Record<string, string>>(defaultSizes);
   const [hours, setHours] = useState<Record<string, number>>({});
   const [gridProfileId, setGridProfileId] = useState<GridProfileId>("outages_24_7");
   const [usesGenerator, setUsesGenerator] = useState<boolean | null>(null);
   const [genHours, setGenHours] = useState(4);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">(
+    "idle",
+  );
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -66,12 +81,12 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
   }, []);
 
   const quote = useMemo(
-    () => buildQuote(quantities, gridProfileId, city, hours),
-    [quantities, gridProfileId, city, hours],
+    () => buildQuote(quantities, gridProfileId, city, hours, sizes),
+    [quantities, gridProfileId, city, hours, sizes],
   );
   const { pkg, load, neededBatteryKwh } = useMemo(
-    () => recommendPackage(quantities, gridProfileId, hours),
-    [quantities, gridProfileId, hours],
+    () => recommendPackage(quantities, gridProfileId, hours, sizes),
+    [quantities, gridProfileId, hours, sizes],
   );
 
   useEffect(() => {
@@ -79,6 +94,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
     saveDraft({
       quantities,
       hours,
+      sizes,
       gridProfileId,
       city,
       siteKind: siteKind ?? undefined,
@@ -89,6 +105,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
   }, [
     quantities,
     hours,
+    sizes,
     gridProfileId,
     city,
     siteKind,
@@ -101,9 +118,40 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
   const index = SCREENS.indexOf(screen);
   const selectedCount = Object.values(quantities).filter((n) => n > 0).length;
   const chatHref = whatsappUrl(estimateWhatsAppText(quote, pkg));
+  const packageSummary = `${pkg.name} (${pkg.inverterKw}kW · ~${pkg.batteryKwh}kWh backup · ${pkg.panelCount} panels)`;
 
   function go(next: Screen) {
     setScreen(next);
+  }
+
+  async function saveSelection() {
+    if (!siteKind) return;
+    setSaveState("saving");
+    setSaveError(null);
+    try {
+      await submitLead({
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        city,
+        siteKind,
+        gridProfileId,
+        usesGenerator,
+        genHoursPerDay: genHours,
+        quantities,
+        hours,
+        sizes,
+        runningWatts: load.runningWatts,
+        surgeWatts: load.coincidentSurgeW,
+        dailyKwh: load.dailyKwh,
+        neededBatteryKwh,
+        packageId: pkg.id,
+        packageSummary,
+      });
+      setSaveState("saved");
+    } catch (err) {
+      setSaveState("error");
+      setSaveError(err instanceof Error ? err.message : "Could not save");
+    }
   }
 
   function bump(id: string, delta: number) {
@@ -283,7 +331,9 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                     })}
                   </div>
                   <div className="mt-5 space-y-3">
-                    {APPLIANCES.filter((a) => (quantities[a.id] ?? 0) > 0).map((appliance) => (
+                    {APPLIANCES.filter((a) => (quantities[a.id] ?? 0) > 0).map((appliance) => {
+                      const power = applianceWatts(appliance, sizes[appliance.id]);
+                      return (
                       <div
                         key={appliance.id}
                         className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
@@ -292,7 +342,10 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                           <div>
                             <p className="font-semibold">{appliance.name}</p>
                             <p className="text-xs text-slate-500">
-                              {appliance.runningWatts}W each · {appliance.localLabel}
+                              {power.runningWatts}W each
+                              {power.sizeLabel ? ` · ${power.sizeLabel}` : ""}
+                              {" · "}
+                              {appliance.localLabel}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
@@ -317,6 +370,39 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                             </button>
                           </div>
                         </div>
+                        {appliance.sizes?.length ? (
+                          <div className="mt-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              {appliance.sizePrompt ?? "Size / HP"}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {appliance.sizes.map((opt) => {
+                                const selected =
+                                  (sizes[appliance.id] ?? appliance.defaultSizeId) ===
+                                  opt.id;
+                                return (
+                                  <button
+                                    key={opt.id}
+                                    type="button"
+                                    onClick={() =>
+                                      setSizes((prev) => ({
+                                        ...prev,
+                                        [appliance.id]: opt.id,
+                                      }))
+                                    }
+                                    className={`h-10 rounded-full px-3.5 text-sm font-semibold ${
+                                      selected
+                                        ? "bg-navy text-white"
+                                        : "border border-slate-200 bg-white text-navy"
+                                    }`}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : null}
                         <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                           Hours / day
                           <select
@@ -342,11 +428,13 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                           </select>
                         </label>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   {selectedCount === 0 ? (
                     <p className="mt-6 text-sm text-slate-500">
-                      Tap every load you want on solar. Quantity and hours open next.
+                      Tap each appliance you want on solar. Then pick the size or HP
+                      where it asks.
                     </p>
                   ) : null}
                 </div>
@@ -357,13 +445,13 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                   <Choice
                     selected={usesGenerator === true}
                     title="Yes — diesel or petrol"
-                    body="We’ll size lithium so you can cut generator hours, not guess them."
+                    body="We’ll plan battery backup so you can run the generator less."
                     onClick={() => setUsesGenerator(true)}
                   />
                   <Choice
                     selected={usesGenerator === false}
                     title="No generator"
-                    body="Solar and lithium need to cover the outages on their own."
+                    body="Your solar package needs to cover outages on its own."
                     onClick={() => setUsesGenerator(false)}
                   />
                   <AnimatePresence>
@@ -405,53 +493,110 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                     <p className="text-xs uppercase tracking-wider text-gold">
                       {siteKind === "shop" ? "Shop" : "Home"} · {city}
                     </p>
-                    <h3 className="mt-1 text-2xl font-semibold">
-                      {formatWatts(load.runningWatts)} running
-                    </h3>
-                    <p className="mt-1 text-sm text-slate-300">
-                      Suggested class: {pkg.inverterKw}kW hybrid · ~{pkg.batteryKwh}kWh
-                      lithium · {pkg.panelCount} × {pkg.panelWatts}W array
+                    <h3 className="mt-1 text-2xl font-semibold">{pkg.name}</h3>
+                    <p className="mt-1 text-sm text-slate-300">{pkg.tagline}</p>
+                    <p className="mt-3 text-sm text-slate-300">
+                      Built around what you selected — inverter, battery backup and
+                      solar panels sized for your place.
                     </p>
                     {usesGenerator ? (
                       <p className="mt-3 text-sm text-slate-300">
-                        Generator about {genHours} hrs/day — lithium is aimed at cutting
-                        those hours, not replacing the quote.
+                        You run a generator about {genHours} hrs/day — we’ll aim the
+                        package at cutting those hours. Final price comes on your quote.
                       </p>
                     ) : null}
                   </section>
                   <div className="grid gap-3 sm:grid-cols-3">
                     <Metric
                       icon={<Zap className="h-4 w-4" />}
-                      label="Peak load"
+                      label="What you’re running"
                       value={formatWatts(load.runningWatts)}
-                      hint={`Surge ${formatWatts(load.coincidentSurgeW)}`}
+                      hint="From the appliances you picked"
                     />
                     <Metric
                       icon={<Sun className="h-4 w-4" />}
-                      label="Daily use"
+                      label="Roughly per day"
                       value={formatKwh(load.dailyKwh)}
-                      hint="From your hours, not a brochure"
+                      hint="Based on the hours you set"
                     />
                     <Metric
                       icon={<BatteryCharging className="h-4 w-4" />}
-                      label="Battery target"
+                      label="Battery backup"
                       value={`${neededBatteryKwh} kWh`}
-                      hint={`Bank around ${pkg.batteryKwh}kWh`}
+                      hint={`Package around ${pkg.batteryKwh}kWh`}
                       accent
                     />
                   </div>
                   <p className="flex gap-2 text-sm text-slate-600">
                     <Shield className="mt-0.5 h-4 w-4 shrink-0 text-solar" />
-                    This is a planning estimate. A TorchVolt officer quotes from recent
-                    prices after looking at the roof and DB board.
+                    This is a planning guide, not a final price. A TorchVolt person
+                    confirms the quote after looking at your place.
                   </p>
+
+                  <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-sm font-semibold text-navy">
+                      Leave your details so we can follow up
+                    </p>
+                    <label className="block text-sm">
+                      <span className="font-medium text-slate-600">Full name</span>
+                      <input
+                        type="text"
+                        value={customerName}
+                        onChange={(e) => {
+                          setCustomerName(e.target.value);
+                          if (saveState !== "idle") setSaveState("idle");
+                        }}
+                        placeholder="e.g. Ada Okafor"
+                        className="mt-1.5 h-12 w-full rounded-xl border border-slate-200 bg-white px-4 outline-none ring-navy focus:ring-2"
+                      />
+                    </label>
+                    <label className="block text-sm">
+                      <span className="font-medium text-slate-600">WhatsApp / phone</span>
+                      <input
+                        type="tel"
+                        value={customerPhone}
+                        onChange={(e) => {
+                          setCustomerPhone(e.target.value);
+                          if (saveState !== "idle") setSaveState("idle");
+                        }}
+                        placeholder="e.g. 0803 000 0000"
+                        className="mt-1.5 h-12 w-full rounded-xl border border-slate-200 bg-white px-4 outline-none ring-navy focus:ring-2"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={
+                        saveState === "saving" ||
+                        saveState === "saved" ||
+                        !customerName.trim() ||
+                        customerPhone.trim().length < 8
+                      }
+                      onClick={() => void saveSelection()}
+                      className="flex h-12 w-full items-center justify-center rounded-2xl bg-navy text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+                    >
+                      {saveState === "saving"
+                        ? "Saving…"
+                        : saveState === "saved"
+                          ? "Saved for TorchVolt"
+                          : "Save my details"}
+                    </button>
+                    {saveError ? (
+                      <p className="text-sm text-red-600">{saveError}</p>
+                    ) : null}
+                    {saveState === "saved" ? (
+                      <p className="text-sm text-solar">
+                        Saved. Call or WhatsApp whenever you want your quote.
+                      </p>
+                    ) : null}
+                  </div>
+
                   <div className="grid gap-3">
                     <a
                       href={telUrl()}
                       className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-gold text-base font-semibold text-navy"
                     >
                       <Phone className="h-4 w-4" />
-                      Call for your solar system setup
+                      Call for your free quote
                     </a>
                     <a
                       href={chatHref}
@@ -459,7 +604,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                       rel="noopener noreferrer"
                       className="flex h-14 items-center justify-center rounded-2xl bg-[#25D366] text-base font-semibold text-white"
                     >
-                      Get recent price quotation on WhatsApp
+                      Get my quote on WhatsApp
                     </a>
                   </div>
                 </div>
@@ -496,6 +641,10 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                 setHours({});
                 setSiteKind(null);
                 setUsesGenerator(null);
+                setCustomerName("");
+                setCustomerPhone("");
+                setSaveState("idle");
+                setSaveError(null);
                 go("who");
               }}
               className="h-12 rounded-full border border-slate-200 px-5 font-semibold"
@@ -514,29 +663,29 @@ const COPY: Record<
   { title: (kind: SiteKind | null) => string; lead: string }
 > = {
   who: {
-    title: () => "What do you want to power?",
-    lead: "We’ll only ask the next questions that match that answer.",
+    title: () => "Is this for a home or an office?",
+    lead: "We’ll only ask what matters for that place.",
   },
   city: {
-    title: () => "Where is the site?",
-    lead: "Sun hours are similar nationwide. City helps us route the right crew.",
+    title: () => "Where should we install?",
+    lead: "City helps us send the right team for your quote and installation.",
   },
   grid: {
     title: (kind) =>
-      kind === "shop" ? "How is power at the shop?" : "How is NEPA at the house?",
-    lead: "Battery size follows outages. Inverter size follows the loads you pick next.",
+      kind === "shop" ? "How often does power go out at the shop?" : "How often does NEPA go out?",
+    lead: "More outages usually means more battery backup in your package.",
   },
   loads: {
-    title: () => "Tap everything that must stay on.",
-    lead: "Then set quantity and hours. The running load at the top updates as you tap.",
+    title: () => "What must stay on when NEPA fails?",
+    lead: "Tap each one, pick the size or HP if asked, then set how many and how long they run.",
   },
   generator: {
-    title: () => "Do you run a generator today?",
-    lead: "If yes, tell us roughly how long. We use it to shape backup hours — not a website price.",
+    title: () => "Do you use a generator today?",
+    lead: "If yes, roughly how many hours a day? That helps us plan your backup.",
   },
   result: {
-    title: () => "Your free solar recommendation",
-    lead: "Call or WhatsApp for a quotation based on recent prices.",
+    title: () => "Here’s a package that fits",
+    lead: "Call or WhatsApp for your free quote with today’s prices.",
   },
 };
 
@@ -544,7 +693,7 @@ function LiveLoad({ watts, count }: { watts: number; count: number }) {
   return (
     <div className="rounded-full bg-slate-100 px-3 py-1.5 text-right">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-        {count === 1 ? "1 load" : `${count} loads`}
+        {count === 1 ? "1 item" : `${count} items`}
       </p>
       <motion.p
         key={watts}

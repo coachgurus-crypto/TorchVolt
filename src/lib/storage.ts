@@ -6,6 +6,7 @@ export type SiteKind = "home" | "shop";
 export interface DraftQuote {
   quantities: Record<string, number>;
   hours: Record<string, number>;
+  sizes?: Record<string, string>;
   gridProfileId: GridProfileId;
   city: string;
   siteKind?: SiteKind;

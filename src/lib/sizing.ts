@@ -1,5 +1,5 @@
 import { BRAND } from "@/lib/constants";
-import { APPLIANCES, GRID_PROFILES } from "@/lib/data/appliances";
+import { APPLIANCES, GRID_PROFILES, applianceWatts } from "@/lib/data/appliances";
 import { PACKAGES } from "@/lib/data/packages";
 import type { GridProfileId, Quote, SolarPackage } from "@/lib/types";
 
@@ -13,6 +13,7 @@ export function computeLoad(
   quantities: Record<string, number>,
   gridProfileId: GridProfileId,
   hoursOverride: Record<string, number> = {},
+  sizes: Record<string, string> = {},
 ): LoadResult {
   let runningWatts = 0;
   let dailyKwh = 0;
@@ -21,9 +22,10 @@ export function computeLoad(
   for (const appliance of APPLIANCES) {
     const qty = quantities[appliance.id] ?? 0;
     if (qty <= 0) continue;
-    const running = appliance.runningWatts * qty;
+    const power = applianceWatts(appliance, sizes[appliance.id]);
+    const running = power.runningWatts * qty;
     runningWatts += running;
-    surgeEvents.push(appliance.runningWatts * appliance.surgeMultiplier * qty);
+    surgeEvents.push(power.runningWatts * power.surgeMultiplier * qty);
     const hours =
       hoursOverride[appliance.id] ?? appliance.hoursByProfile[gridProfileId];
     dailyKwh += (running * hours * appliance.dutyCycle) / 1000;
@@ -50,8 +52,9 @@ export function recommendPackage(
   quantities: Record<string, number>,
   gridProfileId: GridProfileId,
   hoursOverride: Record<string, number> = {},
+  sizes: Record<string, string> = {},
 ): { pkg: SolarPackage; load: LoadResult; neededBatteryKwh: number } {
-  const load = computeLoad(quantities, gridProfileId, hoursOverride);
+  const load = computeLoad(quantities, gridProfileId, hoursOverride, sizes);
   const profile = GRID_PROFILES.find((p) => p.id === gridProfileId)!;
   const neededBatteryKwh = Number((load.dailyKwh * profile.autonomyDays).toFixed(1));
 
@@ -86,10 +89,16 @@ export function monthlyPayment(cashPriceNgn: number): number {
 export function buildQuote(
   quantities: Record<string, number>,
   gridProfileId: GridProfileId,
-  city = "Lagos",
+  city = "Ibadan",
   hoursOverride: Record<string, number> = {},
+  sizes: Record<string, string> = {},
 ): Quote {
-  const { pkg, load } = recommendPackage(quantities, gridProfileId, hoursOverride);
+  const { pkg, load } = recommendPackage(
+    quantities,
+    gridProfileId,
+    hoursOverride,
+    sizes,
+  );
   const cash = pkg.cashPriceNgn;
   const generation = dailyGenerationKwh(pkg);
 
@@ -98,6 +107,7 @@ export function buildQuote(
     createdAt: "",
     city,
     quantities,
+    sizes,
     gridProfileId,
     packageId: pkg.id,
     peakLoadW: load.runningWatts,
@@ -136,12 +146,22 @@ export function buildQuote(
 }
 
 export function estimateWhatsAppText(quote: Quote, pkg: SolarPackage): string {
+  const sizeBits = APPLIANCES.filter((a) => (quote.quantities[a.id] ?? 0) > 0)
+    .map((a) => {
+      const qty = quote.quantities[a.id];
+      const power = applianceWatts(a, quote.sizes[a.id]);
+      const size = power.sizeLabel ? ` ${power.sizeLabel}` : "";
+      return `${qty}× ${a.name}${size}`;
+    })
+    .join(", ");
+
   return [
     `Hello TorchVolt, I estimated my power need on the site.`,
     `City: ${quote.city}`,
-    `Peak running load: ${quote.peakLoadW}W`,
-    `Surge: ${quote.surgeW}W`,
-    `Suggested class: ${pkg.inverterKw}kW hybrid, ~${pkg.batteryKwh}kWh lithium, ${pkg.panelCount} × ${pkg.panelWatts}W panels`,
+    sizeBits ? `Appliances: ${sizeBits}` : null,
+    `Suggested package: ${pkg.name}`,
     `Please send a quote on WhatsApp.`,
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
