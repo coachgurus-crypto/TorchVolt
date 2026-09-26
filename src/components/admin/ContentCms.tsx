@@ -186,8 +186,8 @@ export function ContentCms({
 
   if (editing) {
     return (
-      <div className="-m-6">
-        <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-white/[0.06] bg-[#09090b]/80 px-3 backdrop-blur-md">
+      <div className="-m-6 flex h-[calc(100dvh)] flex-col">
+        <header className="relative z-30 flex h-12 shrink-0 items-center justify-between border-b border-white/[0.06] bg-[#09090b] px-3">
           <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
@@ -233,51 +233,15 @@ export function ContentCms({
         </header>
 
         {error ? (
-          <p className="mx-auto mt-4 max-w-[680px] px-4 text-[13px] text-red-400">
-            {error}
-          </p>
+          <p className="shrink-0 px-4 py-3 text-[13px] text-red-400">{error}</p>
         ) : null}
 
-        <div className="mx-auto max-w-[720px] px-6 pt-16 pb-4">
-          <input
-            value={editing.title}
-            onChange={(e) => {
-              const title = e.target.value;
-              setEditing((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      title,
-                      slug: slugTouched ? prev.slug : slugifyTitle(title),
-                    }
-                  : prev,
-              );
-            }}
-            onPaste={(e) => {
-              const plain = e.clipboardData.getData("text/plain") || "";
-              if (plain.includes("\n") || plain.length > 160) {
-                e.preventDefault();
-                const lines = plain
-                  .replace(/\r\n/g, "\n")
-                  .split("\n")
-                  .map((l) => l.replace(/^#+\s+/, "").trim())
-                  .filter(Boolean);
-                const title = lines[0]?.slice(0, 160) || "";
-                setEditing((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        title: title || prev.title,
-                        slug:
-                          slugTouched || !title
-                            ? prev.slug
-                            : slugifyTitle(title),
-                      }
-                    : prev,
-                );
-              } else if (/^#{1,6}\s+/.test(plain)) {
-                e.preventDefault();
-                const title = plain.replace(/^#{1,6}\s+/, "").trim();
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-[720px] px-6 pb-16 pt-10">
+            <input
+              value={editing.title}
+              onChange={(e) => {
+                const title = e.target.value;
                 setEditing((prev) =>
                   prev
                     ? {
@@ -287,17 +251,53 @@ export function ContentCms({
                       }
                     : prev,
                 );
+              }}
+              onPaste={(e) => {
+                const plain = e.clipboardData.getData("text/plain") || "";
+                if (plain.includes("\n") || plain.length > 160) {
+                  e.preventDefault();
+                  const lines = plain
+                    .replace(/\r\n/g, "\n")
+                    .split("\n")
+                    .map((l) => l.replace(/^#+\s+/, "").trim())
+                    .filter(Boolean);
+                  const title = lines[0]?.slice(0, 160) || "";
+                  setEditing((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          title: title || prev.title,
+                          slug:
+                            slugTouched || !title
+                              ? prev.slug
+                              : slugifyTitle(title),
+                        }
+                      : prev,
+                  );
+                } else if (/^#{1,6}\s+/.test(plain)) {
+                  e.preventDefault();
+                  const title = plain.replace(/^#{1,6}\s+/, "").trim();
+                  setEditing((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          title,
+                          slug: slugTouched ? prev.slug : slugifyTitle(title),
+                        }
+                      : prev,
+                  );
+                }
+              }}
+              placeholder="Untitled"
+              className="mb-6 w-full border-0 bg-transparent text-[42px] font-semibold leading-[1.1] tracking-[-0.045em] text-zinc-50 outline-none placeholder:text-zinc-700"
+            />
+            <RichTextEditor
+              value={editing.html}
+              onChange={(html) =>
+                setEditing((prev) => (prev ? { ...prev, html } : prev))
               }
-            }}
-            placeholder="Untitled"
-            className="mb-6 w-full border-0 bg-transparent text-[42px] font-semibold leading-[1.1] tracking-[-0.045em] text-zinc-50 outline-none placeholder:text-zinc-700"
-          />
-          <RichTextEditor
-            value={editing.html}
-            onChange={(html) =>
-              setEditing((prev) => (prev ? { ...prev, html } : prev))
-            }
-          />
+            />
+          </div>
         </div>
 
         <PageSettingsPanel

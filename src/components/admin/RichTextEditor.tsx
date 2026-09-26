@@ -70,7 +70,7 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "rich-editor-surface min-h-[28rem] max-w-none px-1 py-2 text-[17px] leading-[1.75] text-zinc-200 outline-none",
+          "rich-editor-surface ProseMirror min-h-[28rem] max-w-none px-1 py-2 text-[17px] leading-[1.75] text-zinc-200 outline-none",
       },
       transformPastedHTML(html) {
         return mergeBrokenParagraphs(rebuildPastedTables(html));
@@ -131,8 +131,8 @@ export function RichTextEditor({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-white/[0.06] bg-[#111113]">
-      <div className="sticky top-12 z-10 flex flex-wrap items-center gap-0.5 border-b border-white/[0.06] bg-[#111113]/95 px-2 py-1.5 backdrop-blur">
+    <div className="flex flex-col overflow-hidden rounded-lg border border-white/[0.06] bg-[#111113]">
+      <div className="relative z-10 flex shrink-0 flex-wrap items-center gap-0.5 border-b border-white/[0.06] bg-[#111113] px-2 py-1.5">
         <ToolBtn
           active={editor.isActive("bold")}
           onClick={() => editor.chain().focus().toggleBold().run()}
