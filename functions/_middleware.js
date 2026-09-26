@@ -28,7 +28,18 @@ export async function onRequest(context) {
   const hit = await caches.default.match(cacheKey);
   if (hit) return hit;
 
-  const originPage = await context.next();
+  // Serve the static /view shell (redirects must not steal app routes).
+  const assets = context.env.ASSETS;
+  let originPage;
+  if (assets?.fetch) {
+    originPage = await assets.fetch(new URL("/view", url.origin));
+    if (originPage.status >= 400) {
+      originPage = await assets.fetch(new URL("/view.html", url.origin));
+    }
+  } else {
+    originPage = await context.next();
+  }
+
   const title =
     result.status === "content"
       ? `${seoTitle(result.content)} · TorchVolt`
