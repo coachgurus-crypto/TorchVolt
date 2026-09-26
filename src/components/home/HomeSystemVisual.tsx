@@ -1,24 +1,24 @@
-export function HomeSystemVisual() {
+import type { HomepageCopy } from "@/lib/homepageCopy";
+
+export function HomeSystemVisual({ copy }: { copy: HomepageCopy["example"] }) {
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_30px_80px_rgba(0,0,0,0.35)] sm:p-6">
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold/90">
-        Example home · not your quote yet
+        {copy.eyebrow}
       </p>
-      <p className="mt-2 text-lg font-semibold text-white">A typical 3-bedroom evening</p>
-      <p className="mt-1 text-sm text-slate-400">
-        Fridge, fans, lights, decoder — and room for one AC when you need it.
-      </p>
+      <p className="mt-2 text-lg font-semibold text-white">{copy.title}</p>
+      <p className="mt-1 text-sm text-slate-400">{copy.subtitle}</p>
 
       <dl className="mt-5 grid grid-cols-2 gap-3">
-        {[
-          ["Keeps running", "Fridge & lights"],
-          ["Comfort", "Fans + 1 AC"],
-          ["Backup feel", "Through the night"],
-          ["Suggested", "Family package"],
-        ].map(([label, value]) => (
-          <div key={label} className="rounded-2xl bg-black/25 px-3 py-3 ring-1 ring-white/10">
-            <dt className="text-[11px] uppercase tracking-wide text-slate-400">{label}</dt>
-            <dd className="mt-1 text-lg font-semibold text-white">{value}</dd>
+        {copy.metrics.map((metric) => (
+          <div
+            key={`${metric.label}-${metric.value}`}
+            className="rounded-2xl bg-black/25 px-3 py-3 ring-1 ring-white/10"
+          >
+            <dt className="text-[11px] uppercase tracking-wide text-slate-400">
+              {metric.label}
+            </dt>
+            <dd className="mt-1 text-lg font-semibold text-white">{metric.value}</dd>
           </div>
         ))}
       </dl>

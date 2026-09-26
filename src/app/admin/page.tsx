@@ -3,17 +3,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { ContentCms } from "@/components/admin/ContentCms";
 import { CustomersPanel } from "@/components/admin/CustomersPanel";
+import { HomepageEditor } from "@/components/admin/HomepageEditor";
 import { fetchLeads } from "@/lib/leads";
 
 const PIN_KEY = "torchvolt.admin.pin";
 
-type Tab = "customers" | "blog" | "pages";
+type Tab = "homepage" | "customers" | "blog" | "pages";
 
 export default function AdminDashboardPage() {
   const [pin, setPin] = useState("");
   const [draftPin, setDraftPin] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("blog");
+  const [tab, setTab] = useState<Tab>("homepage");
 
   useEffect(() => {
     const saved = sessionStorage.getItem(PIN_KEY);
@@ -94,6 +95,7 @@ export default function AdminDashboardPage() {
         <nav className="mt-6 flex flex-col gap-0.5">
           {(
             [
+              ["homepage", "Homepage"],
               ["blog", "Posts"],
               ["pages", "Pages"],
               ["customers", "Customers"],
@@ -132,6 +134,10 @@ export default function AdminDashboardPage() {
         {tab === "customers" ? (
           <div className="p-6 [&_*]:border-white/10 [&_a]:text-zinc-100 [&_article]:bg-[#111113] [&_article]:text-zinc-200 [&_button]:text-zinc-200 [&_h1]:text-zinc-50 [&_h2]:text-zinc-50 [&_p]:text-zinc-400 [&_ul]:border-white/10 [&_ul]:bg-[#111113]">
             <CustomersPanel pin={pin} onAuthError={onAuthError} />
+          </div>
+        ) : tab === "homepage" ? (
+          <div className="p-6">
+            <HomepageEditor pin={pin} onAuthError={onAuthError} />
           </div>
         ) : (
           <div className="p-6">
