@@ -81,9 +81,7 @@ export function HomepageEditor({
   }
 
   if (loading) {
-    return (
-      <p className="text-[13px] text-zinc-500">Loading homepage copy…</p>
-    );
+    return <p className="text-[13px] text-zinc-500">Loading homepage copy…</p>;
   }
 
   return (
@@ -92,7 +90,7 @@ export function HomepageEditor({
         <div>
           <p className="text-[13px] font-medium text-zinc-100">Homepage</p>
           <p className="text-[12px] text-zinc-500">
-            Click any text on the preview to edit. Save publishes live.
+            Click any text to edit — header, footer, wizard prompts, and packages included.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -122,6 +120,40 @@ export function HomepageEditor({
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-slate-50 text-navy shadow-2xl">
+        {/* Header */}
+        <header className="border-b border-slate-200/70 bg-white">
+          <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center justify-between px-4">
+            <span className="text-lg font-semibold tracking-tight">TorchVolt</span>
+            <nav className="flex items-center gap-2 sm:gap-3">
+              <Editable
+                value={copy.header.blog}
+                onChange={(blog) =>
+                  patch((p) => ({ ...p, header: { ...p.header, blog } }))
+                }
+                as="span"
+                className="hidden rounded-full px-3.5 py-2 text-sm font-medium text-slate-600 sm:inline-flex"
+              />
+              <Editable
+                value={copy.header.howItWorks}
+                onChange={(howItWorks) =>
+                  patch((p) => ({ ...p, header: { ...p.header, howItWorks } }))
+                }
+                as="span"
+                className="hidden rounded-full px-3.5 py-2 text-sm font-medium text-slate-600 md:inline-flex"
+              />
+              <span className="inline-flex h-11 items-center rounded-full bg-navy px-5 text-sm font-semibold text-white">
+                <Editable
+                  value={copy.header.cta}
+                  onChange={(cta) =>
+                    patch((p) => ({ ...p, header: { ...p.header, cta } }))
+                  }
+                  as="span"
+                />
+              </span>
+            </nav>
+          </div>
+        </header>
+
         {/* Hero */}
         <section className="hero-mesh relative text-white">
           <div className="hero-grid pointer-events-none absolute inset-0 overflow-hidden opacity-70" />
@@ -268,11 +300,431 @@ export function HomepageEditor({
               multiline
               className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base"
             />
-            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white/70 px-4 py-10 text-center text-sm text-slate-500">
-              Quote wizard stays on the live site — only this intro text is editable here.
+          </div>
+        </section>
+
+        {/* Wizard copy */}
+        <section className="border-t border-slate-200 bg-white py-12">
+          <div className="mx-auto max-w-3xl space-y-8 px-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-solar">
+              Quote wizard screens
+            </p>
+            <WizardBlock
+              label="Home or office"
+              title={copy.wizard.who.title}
+              lead={copy.wizard.who.lead}
+              onTitle={(title) =>
+                patch((p) => ({
+                  ...p,
+                  wizard: { ...p.wizard, who: { ...p.wizard.who, title } },
+                }))
+              }
+              onLead={(lead) =>
+                patch((p) => ({
+                  ...p,
+                  wizard: { ...p.wizard, who: { ...p.wizard.who, lead } },
+                }))
+              }
+            >
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <ChoicePreview
+                  title={copy.wizard.who.homeTitle}
+                  body={copy.wizard.who.homeBody}
+                  onTitle={(homeTitle) =>
+                    patch((p) => ({
+                      ...p,
+                      wizard: {
+                        ...p.wizard,
+                        who: { ...p.wizard.who, homeTitle },
+                      },
+                    }))
+                  }
+                  onBody={(homeBody) =>
+                    patch((p) => ({
+                      ...p,
+                      wizard: {
+                        ...p.wizard,
+                        who: { ...p.wizard.who, homeBody },
+                      },
+                    }))
+                  }
+                />
+                <ChoicePreview
+                  title={copy.wizard.who.shopTitle}
+                  body={copy.wizard.who.shopBody}
+                  onTitle={(shopTitle) =>
+                    patch((p) => ({
+                      ...p,
+                      wizard: {
+                        ...p.wizard,
+                        who: { ...p.wizard.who, shopTitle },
+                      },
+                    }))
+                  }
+                  onBody={(shopBody) =>
+                    patch((p) => ({
+                      ...p,
+                      wizard: {
+                        ...p.wizard,
+                        who: { ...p.wizard.who, shopBody },
+                      },
+                    }))
+                  }
+                />
+              </div>
+            </WizardBlock>
+
+            <WizardBlock
+              label="City"
+              title={copy.wizard.city.title}
+              lead={copy.wizard.city.lead}
+              onTitle={(title) =>
+                patch((p) => ({
+                  ...p,
+                  wizard: { ...p.wizard, city: { ...p.wizard.city, title } },
+                }))
+              }
+              onLead={(lead) =>
+                patch((p) => ({
+                  ...p,
+                  wizard: { ...p.wizard, city: { ...p.wizard.city, lead } },
+                }))
+              }
+            />
+
+            <WizardBlock
+              label="Power cuts (home)"
+              title={copy.wizard.grid.title}
+              lead={copy.wizard.grid.lead}
+              onTitle={(title) =>
+                patch((p) => ({
+                  ...p,
+                  wizard: { ...p.wizard, grid: { ...p.wizard.grid, title } },
+                }))
+              }
+              onLead={(lead) =>
+                patch((p) => ({
+                  ...p,
+                  wizard: { ...p.wizard, grid: { ...p.wizard.grid, lead } },
+                }))
+              }
+            >
+              <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Shop title
+                <Editable
+                  value={copy.wizard.grid.titleShop}
+                  onChange={(titleShop) =>
+                    patch((p) => ({
+                      ...p,
+                      wizard: {
+                        ...p.wizard,
+                        grid: { ...p.wizard.grid, titleShop },
+                      },
+                    }))
+                  }
+                  className="mt-1 text-base font-semibold text-navy normal-case tracking-normal"
+                />
+              </label>
+            </WizardBlock>
+
+            <WizardBlock
+              label="Appliances"
+              title={copy.wizard.loads.title}
+              lead={copy.wizard.loads.lead}
+              onTitle={(title) =>
+                patch((p) => ({
+                  ...p,
+                  wizard: { ...p.wizard, loads: { ...p.wizard.loads, title } },
+                }))
+              }
+              onLead={(lead) =>
+                patch((p) => ({
+                  ...p,
+                  wizard: { ...p.wizard, loads: { ...p.wizard.loads, lead } },
+                }))
+              }
+            >
+              <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Empty hint
+                <Editable
+                  value={copy.wizard.loads.emptyHint}
+                  onChange={(emptyHint) =>
+                    patch((p) => ({
+                      ...p,
+                      wizard: {
+                        ...p.wizard,
+                        loads: { ...p.wizard.loads, emptyHint },
+                      },
+                    }))
+                  }
+                  multiline
+                  className="mt-1 text-sm text-slate-600 normal-case tracking-normal"
+                />
+              </label>
+            </WizardBlock>
+
+            <WizardBlock
+              label="Generator"
+              title={copy.wizard.generator.title}
+              lead={copy.wizard.generator.lead}
+              onTitle={(title) =>
+                patch((p) => ({
+                  ...p,
+                  wizard: {
+                    ...p.wizard,
+                    generator: { ...p.wizard.generator, title },
+                  },
+                }))
+              }
+              onLead={(lead) =>
+                patch((p) => ({
+                  ...p,
+                  wizard: {
+                    ...p.wizard,
+                    generator: { ...p.wizard.generator, lead },
+                  },
+                }))
+              }
+            >
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <ChoicePreview
+                  title={copy.wizard.generator.yesTitle}
+                  body={copy.wizard.generator.yesBody}
+                  onTitle={(yesTitle) =>
+                    patch((p) => ({
+                      ...p,
+                      wizard: {
+                        ...p.wizard,
+                        generator: { ...p.wizard.generator, yesTitle },
+                      },
+                    }))
+                  }
+                  onBody={(yesBody) =>
+                    patch((p) => ({
+                      ...p,
+                      wizard: {
+                        ...p.wizard,
+                        generator: { ...p.wizard.generator, yesBody },
+                      },
+                    }))
+                  }
+                />
+                <ChoicePreview
+                  title={copy.wizard.generator.noTitle}
+                  body={copy.wizard.generator.noBody}
+                  onTitle={(noTitle) =>
+                    patch((p) => ({
+                      ...p,
+                      wizard: {
+                        ...p.wizard,
+                        generator: { ...p.wizard.generator, noTitle },
+                      },
+                    }))
+                  }
+                  onBody={(noBody) =>
+                    patch((p) => ({
+                      ...p,
+                      wizard: {
+                        ...p.wizard,
+                        generator: { ...p.wizard.generator, noBody },
+                      },
+                    }))
+                  }
+                />
+              </div>
+            </WizardBlock>
+
+            <WizardBlock
+              label="Result"
+              title={copy.wizard.result.title}
+              lead={copy.wizard.result.lead}
+              onTitle={(title) =>
+                patch((p) => ({
+                  ...p,
+                  wizard: {
+                    ...p.wizard,
+                    result: { ...p.wizard.result, title },
+                  },
+                }))
+              }
+              onLead={(lead) =>
+                patch((p) => ({
+                  ...p,
+                  wizard: {
+                    ...p.wizard,
+                    result: { ...p.wizard.result, lead },
+                  },
+                }))
+              }
+            >
+              <div className="mt-4 space-y-3">
+                <Editable
+                  value={copy.wizard.result.disclaimer}
+                  onChange={(disclaimer) =>
+                    patch((p) => ({
+                      ...p,
+                      wizard: {
+                        ...p.wizard,
+                        result: { ...p.wizard.result, disclaimer },
+                      },
+                    }))
+                  }
+                  multiline
+                  className="text-sm text-slate-600"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex h-11 items-center rounded-2xl bg-gold px-4 text-sm font-semibold text-navy">
+                    <Editable
+                      value={copy.wizard.result.callCta}
+                      onChange={(callCta) =>
+                        patch((p) => ({
+                          ...p,
+                          wizard: {
+                            ...p.wizard,
+                            result: { ...p.wizard.result, callCta },
+                          },
+                        }))
+                      }
+                      as="span"
+                    />
+                  </span>
+                  <span className="inline-flex h-11 items-center rounded-2xl bg-[#25D366] px-4 text-sm font-semibold text-white">
+                    <Editable
+                      value={copy.wizard.result.whatsappCta}
+                      onChange={(whatsappCta) =>
+                        patch((p) => ({
+                          ...p,
+                          wizard: {
+                            ...p.wizard,
+                            result: { ...p.wizard.result, whatsappCta },
+                          },
+                        }))
+                      }
+                      as="span"
+                    />
+                  </span>
+                  <span className="inline-flex h-11 items-center rounded-2xl bg-navy px-4 text-sm font-semibold text-white">
+                    <Editable
+                      value={copy.wizard.result.saveCta}
+                      onChange={(saveCta) =>
+                        patch((p) => ({
+                          ...p,
+                          wizard: {
+                            ...p.wizard,
+                            result: { ...p.wizard.result, saveCta },
+                          },
+                        }))
+                      }
+                      as="span"
+                    />
+                  </span>
+                </div>
+              </div>
+            </WizardBlock>
+          </div>
+        </section>
+
+        {/* Packages */}
+        <section className="border-t border-slate-200 bg-slate-50 py-12">
+          <div className="mx-auto max-w-3xl px-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-solar">
+              Package names &amp; blurbs
+            </p>
+            <div className="mt-6 space-y-4">
+              {copy.packages.map((pkg, index) => (
+                <div
+                  key={pkg.id}
+                  className="rounded-2xl border border-slate-200 bg-white p-4"
+                >
+                  <p className="text-[11px] font-mono text-slate-400">{pkg.id}</p>
+                  <Editable
+                    value={pkg.name}
+                    onChange={(name) =>
+                      patch((p) => {
+                        const packages = [
+                          ...p.packages,
+                        ] as HomepageCopy["packages"];
+                        packages[index] = { ...packages[index], name };
+                        return { ...p, packages };
+                      })
+                    }
+                    as="h3"
+                    className="mt-1 text-lg font-semibold"
+                  />
+                  <Editable
+                    value={pkg.tagline}
+                    onChange={(tagline) =>
+                      patch((p) => {
+                        const packages = [
+                          ...p.packages,
+                        ] as HomepageCopy["packages"];
+                        packages[index] = { ...packages[index], tagline };
+                        return { ...p, packages };
+                      })
+                    }
+                    multiline
+                    className="mt-1 text-sm text-slate-600"
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </section>
+
+        {/* Footer */}
+        <footer className="border-t border-white/10 bg-navy text-slate-300">
+          <div className="mx-auto max-w-6xl px-4 py-12">
+            <Editable
+              value={copy.footer.heading}
+              onChange={(heading) =>
+                patch((p) => ({ ...p, footer: { ...p.footer, heading } }))
+              }
+              className="max-w-md text-2xl font-semibold tracking-tight text-white"
+            />
+            <Editable
+              value={copy.footer.body}
+              onChange={(body) =>
+                patch((p) => ({ ...p, footer: { ...p.footer, body } }))
+              }
+              multiline
+              className="mt-3 max-w-md text-sm leading-6"
+            />
+            <div className="mt-8 flex flex-col gap-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
+              <Editable
+                value={copy.footer.quoteLink}
+                onChange={(quoteLink) =>
+                  patch((p) => ({ ...p, footer: { ...p.footer, quoteLink } }))
+                }
+                as="span"
+                className="hover:text-white"
+              />
+              <Editable
+                value={copy.footer.blogLink}
+                onChange={(blogLink) =>
+                  patch((p) => ({ ...p, footer: { ...p.footer, blogLink } }))
+                }
+                as="span"
+              />
+              <Editable
+                value={copy.footer.whatsappLabel}
+                onChange={(whatsappLabel) =>
+                  patch((p) => ({
+                    ...p,
+                    footer: { ...p.footer, whatsappLabel },
+                  }))
+                }
+                as="span"
+              />
+              <Editable
+                value={copy.footer.cities}
+                onChange={(cities) =>
+                  patch((p) => ({ ...p, footer: { ...p.footer, cities } }))
+                }
+                as="span"
+              />
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
@@ -337,6 +789,71 @@ function ExamplePreview({
           </div>
         ))}
       </dl>
+    </div>
+  );
+}
+
+function WizardBlock({
+  label,
+  title,
+  lead,
+  onTitle,
+  onLead,
+  children,
+}: {
+  label: string;
+  title: string;
+  lead: string;
+  onTitle: (v: string) => void;
+  onLead: (v: string) => void;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+        {label}
+      </p>
+      <Editable
+        value={title}
+        onChange={onTitle}
+        as="h3"
+        className="mt-2 text-xl font-semibold tracking-tight"
+      />
+      <Editable
+        value={lead}
+        onChange={onLead}
+        multiline
+        className="mt-2 text-sm leading-6 text-slate-600"
+      />
+      {children}
+    </div>
+  );
+}
+
+function ChoicePreview({
+  title,
+  body,
+  onTitle,
+  onBody,
+}: {
+  title: string;
+  body: string;
+  onTitle: (v: string) => void;
+  onBody: (v: string) => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <Editable
+        value={title}
+        onChange={onTitle}
+        className="font-semibold text-navy"
+      />
+      <Editable
+        value={body}
+        onChange={onBody}
+        multiline
+        className="mt-1 text-sm text-slate-600"
+      />
     </div>
   );
 }

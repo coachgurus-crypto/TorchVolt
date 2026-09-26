@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { HomepageCopyProvider } from "@/lib/useHomepageCopy";
 
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -13,10 +14,10 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
+    <HomepageCopyProvider>
       <SiteHeader />
       <main className="flex-1">{children}</main>
       <SiteFooter />
-    </>
+    </HomepageCopyProvider>
   );
 }

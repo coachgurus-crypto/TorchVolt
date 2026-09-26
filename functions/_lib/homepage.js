@@ -1,9 +1,14 @@
 /**
  * Homepage copy helpers shared by /api/homepage.
- * Keep field shape aligned with src/lib/homepageCopy.ts.
+ * Keep DEFAULT shape aligned with src/lib/homepageCopy.ts.
  */
 
 export const DEFAULT_HOMEPAGE_COPY = {
+  header: {
+    blog: "Blog",
+    howItWorks: "How it works",
+    cta: "Get a free quote",
+  },
   hero: {
     cities: "Ibadan · Lagos · Abuja",
     headline: "Solar that fits your home.",
@@ -46,77 +51,100 @@ export const DEFAULT_HOMEPAGE_COPY = {
       { label: "Suggested", value: "Family package" },
     ],
   },
+  wizard: {
+    who: {
+      title: "Is this for a home or an office?",
+      lead: "We'll only ask what matters for that place.",
+      homeTitle: "A home",
+      homeBody: "Flat, duplex or compound. Fridge, fans, lights, maybe AC and a pump.",
+      shopTitle: "A shop or office",
+      shopBody: "POS, lights, fans and fridge through business hours.",
+    },
+    city: {
+      title: "Where should we install?",
+      lead: "City helps us send the right team for your quote and installation.",
+    },
+    grid: {
+      title: "How often does NEPA go out?",
+      titleShop: "How often does power go out at the shop?",
+      lead: "More outages usually means more battery backup in your package.",
+    },
+    loads: {
+      title: "What must stay on when NEPA fails?",
+      lead: "Tap each one, pick the size or HP if asked, then set how many and how long they run.",
+      emptyHint: "Tap each appliance you want on solar. Then pick the size or HP where it asks.",
+    },
+    generator: {
+      title: "Do you use a generator today?",
+      lead: "If yes, roughly how many hours a day? That helps us plan your backup.",
+      yesTitle: "Yes — diesel or petrol",
+      yesBody: "We'll plan battery backup so you can run the generator less.",
+      noTitle: "No generator",
+      noBody: "Your solar package needs to cover outages on its own.",
+    },
+    result: {
+      title: "Here's a package that fits",
+      lead: "Call or WhatsApp for your free quote with today's prices.",
+      callCta: "Call for your free quote",
+      whatsappCta: "Get my quote on WhatsApp",
+      saveCta: "Save my details",
+      disclaimer:
+        "This is a planning guide, not a final price. A TorchVolt person confirms the quote after looking at your place.",
+    },
+  },
+  packages: [
+    {
+      id: "tv-3.5",
+      name: "Compound Starter",
+      tagline: "Lights, fans, fridge and decoder through the night.",
+    },
+    {
+      id: "tv-5.0",
+      name: "Family Hybrid 5kW",
+      tagline: "The Lagos 3-bed default: 1.5HP AC + pump + fridge.",
+    },
+    {
+      id: "tv-8.0",
+      name: "Whole-Home 8kW",
+      tagline: "Two ACs, borehole pump and all-day backup.",
+    },
+    {
+      id: "tv-10",
+      name: "Estate / Duplex 10kW",
+      tagline: "Bigger homes — longer backup and a larger roof setup.",
+    },
+  ],
+  footer: {
+    heading: "Ready for solar at home or work? Talk to TorchVolt.",
+    body: "We help Nigerian homes and offices get the right solar package — then a clear quote.",
+    quoteLink: "Get a free quote",
+    blogLink: "Blog",
+    whatsappLabel: "WhatsApp",
+    cities: "Ibadan · Lagos · Abuja",
+  },
 };
 
-function asString(value, fallback) {
-  if (typeof value !== "string") return fallback;
-  return value;
-}
-
-function mergeStep(base, patch) {
-  const p = patch && typeof patch === "object" ? patch : {};
-  return {
-    title: asString(p.title, base.title),
-    body: asString(p.body, base.body),
-  };
-}
-
-function mergeMetric(base, patch) {
-  const p = patch && typeof patch === "object" ? patch : {};
-  return {
-    label: asString(p.label, base.label),
-    value: asString(p.value, base.value),
-  };
+function deepMerge(base, patch) {
+  if (Array.isArray(base)) {
+    return base.map((item, i) =>
+      deepMerge(item, Array.isArray(patch) ? patch[i] : undefined),
+    );
+  }
+  if (base && typeof base === "object") {
+    const out = { ...base };
+    const p = patch && typeof patch === "object" ? patch : {};
+    for (const key of Object.keys(base)) {
+      if (typeof base[key] === "string") {
+        out[key] = typeof p[key] === "string" ? p[key] : base[key];
+      } else {
+        out[key] = deepMerge(base[key], p[key]);
+      }
+    }
+    return out;
+  }
+  return base;
 }
 
 export function mergeHomepageCopy(raw) {
-  const src = raw && typeof raw === "object" ? raw : {};
-  const hero = src.hero && typeof src.hero === "object" ? src.hero : {};
-  const how = src.how && typeof src.how === "object" ? src.how : {};
-  const size = src.size && typeof src.size === "object" ? src.size : {};
-  const example = src.example && typeof src.example === "object" ? src.example : {};
-  const howSteps = Array.isArray(how.steps) ? how.steps : [];
-  const exampleMetrics = Array.isArray(example.metrics) ? example.metrics : [];
-
-  return {
-    hero: {
-      cities: asString(hero.cities, DEFAULT_HOMEPAGE_COPY.hero.cities),
-      headline: asString(hero.headline, DEFAULT_HOMEPAGE_COPY.hero.headline),
-      headlineAccent: asString(
-        hero.headlineAccent,
-        DEFAULT_HOMEPAGE_COPY.hero.headlineAccent,
-      ),
-      body: asString(hero.body, DEFAULT_HOMEPAGE_COPY.hero.body),
-      primaryCta: asString(hero.primaryCta, DEFAULT_HOMEPAGE_COPY.hero.primaryCta),
-      secondaryCta: asString(
-        hero.secondaryCta,
-        DEFAULT_HOMEPAGE_COPY.hero.secondaryCta,
-      ),
-    },
-    how: {
-      eyebrow: asString(how.eyebrow, DEFAULT_HOMEPAGE_COPY.how.eyebrow),
-      heading: asString(how.heading, DEFAULT_HOMEPAGE_COPY.how.heading),
-      steps: [
-        mergeStep(DEFAULT_HOMEPAGE_COPY.how.steps[0], howSteps[0]),
-        mergeStep(DEFAULT_HOMEPAGE_COPY.how.steps[1], howSteps[1]),
-        mergeStep(DEFAULT_HOMEPAGE_COPY.how.steps[2], howSteps[2]),
-      ],
-    },
-    size: {
-      eyebrow: asString(size.eyebrow, DEFAULT_HOMEPAGE_COPY.size.eyebrow),
-      heading: asString(size.heading, DEFAULT_HOMEPAGE_COPY.size.heading),
-      body: asString(size.body, DEFAULT_HOMEPAGE_COPY.size.body),
-    },
-    example: {
-      eyebrow: asString(example.eyebrow, DEFAULT_HOMEPAGE_COPY.example.eyebrow),
-      title: asString(example.title, DEFAULT_HOMEPAGE_COPY.example.title),
-      subtitle: asString(example.subtitle, DEFAULT_HOMEPAGE_COPY.example.subtitle),
-      metrics: [
-        mergeMetric(DEFAULT_HOMEPAGE_COPY.example.metrics[0], exampleMetrics[0]),
-        mergeMetric(DEFAULT_HOMEPAGE_COPY.example.metrics[1], exampleMetrics[1]),
-        mergeMetric(DEFAULT_HOMEPAGE_COPY.example.metrics[2], exampleMetrics[2]),
-        mergeMetric(DEFAULT_HOMEPAGE_COPY.example.metrics[3], exampleMetrics[3]),
-      ],
-    },
-  };
+  return deepMerge(DEFAULT_HOMEPAGE_COPY, raw && typeof raw === "object" ? raw : {});
 }

@@ -31,9 +31,11 @@ import {
 } from "@/lib/data/appliances";
 import { formatKwh, formatWatts } from "@/lib/format";
 import { submitLead } from "@/lib/leads";
+import { packageLabel, type HomepageCopy } from "@/lib/homepageCopy";
 import { buildQuote, estimateWhatsAppText, recommendPackage } from "@/lib/sizing";
 import { saveDraft, type SiteKind } from "@/lib/storage";
 import type { GridProfileId } from "@/lib/types";
+import { useHomepageCopy } from "@/lib/useHomepageCopy";
 
 const SCREENS = ["who", "city", "grid", "loads", "generator", "result"] as const;
 type Screen = (typeof SCREENS)[number];
@@ -75,6 +77,8 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
   );
   const [saveError, setSaveError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const siteCopy = useHomepageCopy();
+  const wizardCopy = siteCopy.wizard;
 
   useEffect(() => {
     setHydrated(true);
@@ -88,6 +92,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
     () => recommendPackage(quantities, gridProfileId, hours, sizes),
     [quantities, gridProfileId, hours, sizes],
   );
+  const pkgLabel = packageLabel(siteCopy, pkg.id);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -118,7 +123,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
   const index = SCREENS.indexOf(screen);
   const selectedCount = Object.values(quantities).filter((n) => n > 0).length;
   const chatHref = whatsappUrl(estimateWhatsAppText(quote, pkg));
-  const packageSummary = `${pkg.name} (${pkg.inverterKw}kW · ~${pkg.batteryKwh}kWh backup · ${pkg.panelCount} panels)`;
+  const packageSummary = `${pkgLabel?.name ?? pkg.name} (${pkg.inverterKw}kW · ~${pkg.batteryKwh}kWh backup · ${pkg.panelCount} panels)`;
 
   function go(next: Screen) {
     setScreen(next);
@@ -187,7 +192,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
     go(SCREENS[index + 1]);
   }
 
-  const copy = COPY[screen];
+  const copy = screenCopy(wizardCopy, screen, siteKind);
 
   return (
     <div className={`mx-auto max-w-2xl px-4 ${embedded ? "py-0 pb-8" : "py-6 pb-10"}`}>
@@ -221,7 +226,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
             transition={{ duration: 0.2 }}
           >
               <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                {copy.title(siteKind)}
+                {copy.title}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
                 {copy.lead}
@@ -232,8 +237,8 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                   <Choice
                     selected={siteKind === "home"}
                     icon={<Home className="h-6 w-6" />}
-                    title="A home"
-                    body="Flat, duplex or compound. Fridge, fans, lights, maybe AC and a pump."
+                    title={wizardCopy.who.homeTitle}
+                    body={wizardCopy.who.homeBody}
                     onClick={() => {
                       setSiteKind("home");
                       setGridProfileId("outages_24_7");
@@ -244,8 +249,8 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                   <Choice
                     selected={siteKind === "shop"}
                     icon={<Building2 className="h-6 w-6" />}
-                    title="A shop or office"
-                    body="POS, lights, fans and fridge through business hours."
+                    title={wizardCopy.who.shopTitle}
+                    body={wizardCopy.who.shopBody}
                     onClick={() => {
                       setSiteKind("shop");
                       setGridProfileId("daytime_shop");
@@ -433,8 +438,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                   </div>
                   {selectedCount === 0 ? (
                     <p className="mt-6 text-sm text-slate-500">
-                      Tap each appliance you want on solar. Then pick the size or HP
-                      where it asks.
+                      {wizardCopy.loads.emptyHint}
                     </p>
                   ) : null}
                 </div>
@@ -444,14 +448,14 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                 <div className="mt-8 space-y-3">
                   <Choice
                     selected={usesGenerator === true}
-                    title="Yes — diesel or petrol"
-                    body="We’ll plan battery backup so you can run the generator less."
+                    title={wizardCopy.generator.yesTitle}
+                    body={wizardCopy.generator.yesBody}
                     onClick={() => setUsesGenerator(true)}
                   />
                   <Choice
                     selected={usesGenerator === false}
-                    title="No generator"
-                    body="Your solar package needs to cover outages on its own."
+                    title={wizardCopy.generator.noTitle}
+                    body={wizardCopy.generator.noBody}
                     onClick={() => setUsesGenerator(false)}
                   />
                   <AnimatePresence>
@@ -493,8 +497,12 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                     <p className="text-xs uppercase tracking-wider text-gold">
                       {siteKind === "shop" ? "Shop" : "Home"} · {city}
                     </p>
-                    <h3 className="mt-1 text-2xl font-semibold">{pkg.name}</h3>
-                    <p className="mt-1 text-sm text-slate-300">{pkg.tagline}</p>
+                    <h3 className="mt-1 text-2xl font-semibold">
+                      {pkgLabel?.name ?? pkg.name}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-300">
+                      {pkgLabel?.tagline ?? pkg.tagline}
+                    </p>
                     <p className="mt-3 text-sm text-slate-300">
                       Built around what you selected — inverter, battery backup and
                       solar panels sized for your place.
@@ -529,8 +537,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                   </div>
                   <p className="flex gap-2 text-sm text-slate-600">
                     <Shield className="mt-0.5 h-4 w-4 shrink-0 text-solar" />
-                    This is a planning guide, not a final price. A TorchVolt person
-                    confirms the quote after looking at your place.
+                    {wizardCopy.result.disclaimer}
                   </p>
 
                   <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -578,7 +585,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                         ? "Saving…"
                         : saveState === "saved"
                           ? "Saved for TorchVolt"
-                          : "Save my details"}
+                          : wizardCopy.result.saveCta}
                     </button>
                     {saveError ? (
                       <p className="text-sm text-red-600">{saveError}</p>
@@ -596,7 +603,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                       className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-gold text-base font-semibold text-navy"
                     >
                       <Phone className="h-4 w-4" />
-                      Call for your free quote
+                      {wizardCopy.result.callCta}
                     </a>
                     <a
                       href={chatHref}
@@ -604,7 +611,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                       rel="noopener noreferrer"
                       className="flex h-14 items-center justify-center rounded-2xl bg-[#25D366] text-base font-semibold text-white"
                     >
-                      Get my quote on WhatsApp
+                      {wizardCopy.result.whatsappCta}
                     </a>
                   </div>
                 </div>
@@ -658,36 +665,29 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
   );
 }
 
-const COPY: Record<
-  Screen,
-  { title: (kind: SiteKind | null) => string; lead: string }
-> = {
-  who: {
-    title: () => "Is this for a home or an office?",
-    lead: "We’ll only ask what matters for that place.",
-  },
-  city: {
-    title: () => "Where should we install?",
-    lead: "City helps us send the right team for your quote and installation.",
-  },
-  grid: {
-    title: (kind) =>
-      kind === "shop" ? "How often does power go out at the shop?" : "How often does NEPA go out?",
-    lead: "More outages usually means more battery backup in your package.",
-  },
-  loads: {
-    title: () => "What must stay on when NEPA fails?",
-    lead: "Tap each one, pick the size or HP if asked, then set how many and how long they run.",
-  },
-  generator: {
-    title: () => "Do you use a generator today?",
-    lead: "If yes, roughly how many hours a day? That helps us plan your backup.",
-  },
-  result: {
-    title: () => "Here’s a package that fits",
-    lead: "Call or WhatsApp for your free quote with today’s prices.",
-  },
-};
+function screenCopy(
+  wizard: HomepageCopy["wizard"],
+  screen: Screen,
+  kind: SiteKind | null,
+): { title: string; lead: string } {
+  switch (screen) {
+    case "who":
+      return { title: wizard.who.title, lead: wizard.who.lead };
+    case "city":
+      return { title: wizard.city.title, lead: wizard.city.lead };
+    case "grid":
+      return {
+        title: kind === "shop" ? wizard.grid.titleShop : wizard.grid.title,
+        lead: wizard.grid.lead,
+      };
+    case "loads":
+      return { title: wizard.loads.title, lead: wizard.loads.lead };
+    case "generator":
+      return { title: wizard.generator.title, lead: wizard.generator.lead };
+    case "result":
+      return { title: wizard.result.title, lead: wizard.result.lead };
+  }
+}
 
 function LiveLoad({ watts, count }: { watts: number; count: number }) {
   return (

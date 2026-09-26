@@ -6,6 +6,8 @@ import { BlockEditor } from "@/components/admin/BlockEditor";
 import { PageSettingsPanel } from "@/components/admin/PageSettingsPanel";
 import {
   emptyDocument,
+  clipboardToBlocks,
+  isStructuredPaste,
   parseBlocks,
   serializeBlocks,
   type EditorBlock,
@@ -255,6 +257,54 @@ export function ContentCms({
                   : prev,
               );
             }}
+            onPaste={(e) => {
+              const html = e.clipboardData.getData("text/html") || undefined;
+              const plain = e.clipboardData.getData("text/plain") || undefined;
+              if (!isStructuredPaste(html, plain)) {
+                if (plain && /^#{1,6}\s+/.test(plain) && !plain.includes("\n")) {
+                  e.preventDefault();
+                  const title = plain.replace(/^#{1,6}\s+/, "").trim();
+                  setEditing((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          title,
+                          slug: slugTouched ? prev.slug : slugifyTitle(title),
+                        }
+                      : prev,
+                  );
+                }
+                return;
+              }
+              e.preventDefault();
+              const pasted = clipboardToBlocks(html, plain);
+              const title =
+                pasted.title ||
+                (pasted.blocks[0]?.type === "heading"
+                  ? pasted.blocks[0].content
+                  : pasted.blocks[0]?.type === "paragraph"
+                    ? pasted.blocks[0].content.slice(0, 120)
+                    : "");
+              const bodyBlocks =
+                pasted.title || pasted.blocks[0]?.type === "heading"
+                  ? pasted.title
+                    ? pasted.blocks
+                    : pasted.blocks.slice(1)
+                  : pasted.blocks;
+              setEditing((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      title: title || prev.title,
+                      slug:
+                        slugTouched || !title
+                          ? prev.slug
+                          : slugifyTitle(title),
+                      blocks: bodyBlocks.length ? bodyBlocks : emptyDocument(),
+                    }
+                  : prev,
+              );
+            }}
             placeholder="Untitled"
             className="w-full border-0 bg-transparent text-[42px] font-semibold leading-[1.1] tracking-[-0.045em] text-zinc-50 outline-none placeholder:text-zinc-700"
           />
@@ -264,6 +314,17 @@ export function ContentCms({
           blocks={editing.blocks}
           onChange={(blocks) =>
             setEditing((prev) => (prev ? { ...prev, blocks } : prev))
+          }
+          onSuggestTitle={(title) =>
+            setEditing((prev) =>
+              prev && !prev.title.trim()
+                ? {
+                    ...prev,
+                    title,
+                    slug: slugTouched ? prev.slug : slugifyTitle(title),
+                  }
+                : prev,
+            )
           }
         />
 

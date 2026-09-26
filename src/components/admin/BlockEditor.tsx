@@ -15,7 +15,9 @@ import {
 import { useEffect, useRef, useState } from "react";
 import {
   BLOCK_CATALOG,
+  clipboardToBlocks,
   createBlock,
+  isStructuredPaste,
   type BlockType,
   type EditorBlock,
 } from "@/lib/blocks";
@@ -32,9 +34,12 @@ const ICONS: Record<BlockType, typeof Type> = {
 export function BlockEditor({
   blocks,
   onChange,
+  onSuggestTitle,
 }: {
   blocks: EditorBlock[];
   onChange: (blocks: EditorBlock[]) => void;
+  /** When paste starts with a document title / H1 */
+  onSuggestTitle?: (title: string) => void;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(
     blocks[0]?.id ?? null,
@@ -114,6 +119,32 @@ export function BlockEditor({
     onChange(blocks.map((b) => (b.id === id ? next : b)));
   }
 
+  function applyPaste(atId: string, html: string | undefined, plain: string | undefined) {
+    const { title, blocks: pasted } = clipboardToBlocks(html, plain);
+    if (title && onSuggestTitle) onSuggestTitle(title);
+
+    const idx = blocks.findIndex((b) => b.id === atId);
+    if (idx < 0) {
+      onChange(pasted);
+      setSelectedId(pasted[0]?.id ?? null);
+      return;
+    }
+
+    const current = blocks[idx];
+    const currentEmpty =
+      (current.type === "paragraph" || current.type === "heading") &&
+      !current.content.trim();
+
+    const copy = [...blocks];
+    if (currentEmpty) {
+      copy.splice(idx, 1, ...pasted);
+    } else {
+      copy.splice(idx + 1, 0, ...pasted);
+    }
+    onChange(copy);
+    setSelectedId(pasted[0]?.id ?? null);
+  }
+
   return (
     <div ref={rootRef} className="gutenberg-editor">
       <div className="mx-auto max-w-[680px] px-2 pb-24 pt-2">
@@ -159,6 +190,9 @@ export function BlockEditor({
                       insertBlock("paragraph", index + 1);
                     }}
                     onSlash={() => setInserterAt(index + 1)}
+                    onPasteRich={(html, plain) => {
+                      applyPaste(block.id, html, plain);
+                    }}
                   />
                 </div>
               </div>
@@ -301,7 +335,7 @@ function BlockToolbar({
           onClick={onToggleOrdered}
           className="h-7 px-2 text-[11px] font-medium text-zinc-300"
         >
-          {block.ordered ? "1." : "â€¢"}
+          {block.ordered ? "1." : "•"}
         </button>
       ) : null}
 
@@ -343,13 +377,32 @@ function BlockFields({
   onChange,
   onRequestInsert,
   onSlash,
+  onPasteRich,
 }: {
   block: EditorBlock;
   selected: boolean;
   onChange: (patch: Partial<EditorBlock>) => void;
   onRequestInsert: () => void;
   onSlash?: () => void;
+  onPasteRich?: (html: string | undefined, plain: string | undefined) => void;
 }) {
+  function handlePaste(e: React.ClipboardEvent) {
+    if (!onPasteRich) return;
+    const html = e.clipboardData.getData("text/html") || undefined;
+    const plain = e.clipboardData.getData("text/plain") || undefined;
+    if (!isStructuredPaste(html, plain)) {
+      // Still strip accidental leading markdown hashes on simple paste
+      if (plain && /^#{1,6}\s+/.test(plain) && !plain.includes("\n")) {
+        e.preventDefault();
+        const cleaned = plain.replace(/^#{1,6}\s+/, "");
+        onChange({ content: (block.content || "") + cleaned });
+      }
+      return;
+    }
+    e.preventDefault();
+    onPasteRich(html, plain);
+  }
+
   if (block.type === "separator") {
     return (
       <div className="flex items-center gap-3 py-3">
@@ -363,6 +416,7 @@ function BlockFields({
       <input
         value={block.content}
         onChange={(e) => onChange({ content: e.target.value })}
+        onPaste={handlePaste}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
@@ -385,6 +439,7 @@ function BlockFields({
         <textarea
           value={block.content}
           onChange={(e) => onChange({ content: e.target.value })}
+          onPaste={handlePaste}
           placeholder="Quote"
           rows={2}
           className="w-full resize-none border-0 bg-transparent text-[17px] italic leading-7 text-zinc-300 outline-none placeholder:text-zinc-600"
@@ -406,7 +461,7 @@ function BlockFields({
         {items.map((item, i) => (
           <div key={i} className="flex items-start gap-2">
             <span className="mt-2 w-4 shrink-0 text-center text-[13px] text-zinc-500">
-              {block.ordered ? `${i + 1}.` : "â€¢"}
+              {block.ordered ? `${i + 1}.` : "•"}
             </span>
             <input
               value={item}
@@ -415,6 +470,7 @@ function BlockFields({
                 next[i] = e.target.value;
                 onChange({ items: next });
               }}
+              onPaste={handlePaste}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -489,13 +545,14 @@ function BlockFields({
         }
         onChange({ content: value });
       }}
+      onPaste={handlePaste}
       onKeyDown={(e) => {
         if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
           onRequestInsert();
         }
       }}
-      placeholder="Write, or type / for blocks"
+      placeholder="Write, or paste from Docs — or type / for blocks"
       rows={Math.min(8, Math.max(1, block.content.split("\n").length))}
       className="w-full resize-none border-0 bg-transparent text-[17px] leading-[1.75] text-zinc-200 outline-none placeholder:text-zinc-600"
     />

@@ -222,3 +222,292 @@ export const BLOCK_CATALOG: {
     description: "A horizontal divider line.",
   },
 ];
+
+export type PasteResult = {
+  /** Suggested post title when paste started with an H1 */
+  title?: string;
+  blocks: EditorBlock[];
+};
+
+/** Strip markdown heading markers and tidy clipboard text. */
+export function cleanClipboardText(value: string | null | undefined): string {
+  return String(value ?? "")
+    .replace(/\u00a0/g, " ")
+    .replace(/\r\n/g, "\n")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function textContentOf(el: Element): string {
+  return cleanClipboardText(el.textContent);
+}
+
+function unwrapGoogleWrappers(body: HTMLElement) {
+  // Docs often wraps everything in <b style="font-weight:normal"> or similar.
+  for (let i = 0; i < 6; i += 1) {
+    if (body.children.length !== 1) break;
+    const only = body.children[0] as HTMLElement;
+    const tag = only.tagName;
+    if (!["B", "SPAN", "DIV", "FONT", "CENTER"].includes(tag)) break;
+    while (only.firstChild) body.insertBefore(only.firstChild, only);
+    only.remove();
+  }
+}
+
+function blocksFromNodes(nodes: Iterable<ChildNode>): EditorBlock[] {
+  const out: EditorBlock[] = [];
+
+  for (const node of nodes) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = cleanClipboardText(node.textContent);
+      if (text) out.push(createBlock("paragraph", { content: text }));
+      continue;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) continue;
+    const el = node as HTMLElement;
+    const tag = el.tagName.toLowerCase();
+
+    if (tag === "br") continue;
+
+    if (tag === "h1" || tag === "h2" || tag === "h3" || tag === "h4" || tag === "h5" || tag === "h6") {
+      const content = textContentOf(el);
+      if (!content) continue;
+      // Body editor uses H2/H3 only — H1 becomes H2 (title handled separately).
+      const level: 2 | 3 = tag === "h3" || tag === "h4" || tag === "h5" || tag === "h6" ? 3 : 2;
+      out.push(createBlock("heading", { level, content }));
+      continue;
+    }
+
+    if (tag === "p" || tag === "div" || tag === "section" || tag === "article") {
+      // Prefer structured children when present (nested lists/headings).
+      const hasBlockChild = Array.from(el.children).some((c) =>
+        /^(H[1-6]|UL|OL|BLOCKQUOTE|HR|TABLE|P|DIV)$/i.test(c.tagName),
+      );
+      if (hasBlockChild) {
+        out.push(...blocksFromNodes(el.childNodes));
+      } else {
+        const content = textContentOf(el);
+        if (content) out.push(createBlock("paragraph", { content }));
+      }
+      continue;
+    }
+
+    if (tag === "ul" || tag === "ol") {
+      const items = Array.from(el.querySelectorAll(":scope > li"))
+        .map((li) => textContentOf(li))
+        .filter(Boolean);
+      if (items.length) {
+        out.push(createBlock("list", { ordered: tag === "ol", items }));
+      }
+      continue;
+    }
+
+    if (tag === "blockquote") {
+      const content = textContentOf(el);
+      if (content) out.push(createBlock("quote", { content }));
+      continue;
+    }
+
+    if (tag === "hr") {
+      out.push(createBlock("separator"));
+      continue;
+    }
+
+    if (tag === "li") {
+      const content = textContentOf(el);
+      if (content) out.push(createBlock("list", { items: [content] }));
+      continue;
+    }
+
+    // Fallback: recurse or plain text
+    if (el.children.length) {
+      out.push(...blocksFromNodes(el.childNodes));
+    } else {
+      const content = textContentOf(el);
+      if (content) out.push(createBlock("paragraph", { content }));
+    }
+  }
+
+  return out;
+}
+
+/** Convert HTML clipboard (Google Docs, Word, browsers) into editor blocks. */
+export function htmlClipboardToBlocks(html: string): PasteResult {
+  if (typeof DOMParser === "undefined") {
+    return { blocks: plainClipboardToBlocks(html.replace(/<[^>]+>/g, " ")).blocks };
+  }
+
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  unwrapGoogleWrappers(doc.body);
+  const blocks = blocksFromNodes(doc.body.childNodes).filter((b) => {
+    if (b.type === "separator") return true;
+    if (b.type === "list") return (b.items ?? []).some((i) => i.trim());
+    if (b.type === "image") return Boolean(b.url?.trim());
+    return Boolean(b.content?.trim());
+  });
+
+  if (!blocks.length) return { blocks: emptyDocument() };
+
+  // First H1-equivalent (stored as H2 from Docs title) → suggest as post title
+  let title: string | undefined;
+  if (blocks[0]?.type === "heading" && blocks[0].level === 2) {
+    // Heuristic: treat first heading as title when the HTML had an h1
+    const hadH1 = /<h1[\s>]/i.test(html);
+    if (hadH1) {
+      title = blocks[0].content;
+      blocks.shift();
+    }
+  }
+
+  return {
+    title,
+    blocks: blocks.length ? blocks : emptyDocument(),
+  };
+}
+
+/** Convert plain / markdown-ish clipboard into editor blocks (no leftover #). */
+export function plainClipboardToBlocks(raw: string): PasteResult {
+  const text = raw.replace(/\r\n/g, "\n").trim();
+  if (!text) return { blocks: emptyDocument() };
+
+  const lines = text.split("\n");
+  const blocks: EditorBlock[] = [];
+  let title: string | undefined;
+  let i = 0;
+
+  const flushList = (ordered: boolean, items: string[]) => {
+    if (items.length) blocks.push(createBlock("list", { ordered, items }));
+  };
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      i += 1;
+      continue;
+    }
+
+    const heading = /^(#{1,6})\s+(.+)$/.exec(trimmed);
+    if (heading) {
+      const hashes = heading[1].length;
+      const content = cleanClipboardText(heading[2]);
+      if (hashes === 1 && !title && blocks.length === 0) {
+        title = content;
+      } else {
+        const level: 2 | 3 = hashes >= 3 ? 3 : 2;
+        blocks.push(createBlock("heading", { level, content }));
+      }
+      i += 1;
+      continue;
+    }
+
+    const quote = /^>\s?(.*)$/.exec(trimmed);
+    if (quote) {
+      const parts = [cleanClipboardText(quote[1])];
+      i += 1;
+      while (i < lines.length) {
+        const q = /^>\s?(.*)$/.exec(lines[i].trim());
+        if (!q) break;
+        parts.push(cleanClipboardText(q[1]));
+        i += 1;
+      }
+      blocks.push(createBlock("quote", { content: parts.filter(Boolean).join(" ") }));
+      continue;
+    }
+
+    const ul = /^[-*•]\s+(.+)$/.exec(trimmed);
+    if (ul) {
+      const items = [cleanClipboardText(ul[1])];
+      i += 1;
+      while (i < lines.length) {
+        const next = /^[-*•]\s+(.+)$/.exec(lines[i].trim());
+        if (!next) break;
+        items.push(cleanClipboardText(next[1]));
+        i += 1;
+      }
+      flushList(false, items);
+      continue;
+    }
+
+    const ol = /^\d+[.)]\s+(.+)$/.exec(trimmed);
+    if (ol) {
+      const items = [cleanClipboardText(ol[1])];
+      i += 1;
+      while (i < lines.length) {
+        const next = /^\d+[.)]\s+(.+)$/.exec(lines[i].trim());
+        if (!next) break;
+        items.push(cleanClipboardText(next[1]));
+        i += 1;
+      }
+      flushList(true, items);
+      continue;
+    }
+
+    if (trimmed === "---" || trimmed === "***") {
+      blocks.push(createBlock("separator"));
+      i += 1;
+      continue;
+    }
+
+    // Paragraph: gather until blank line
+    const parts = [cleanClipboardText(trimmed)];
+    i += 1;
+    while (i < lines.length && lines[i].trim()) {
+      const peek = lines[i].trim();
+      if (
+        /^(#{1,6})\s+/.test(peek) ||
+        /^[-*•]\s+/.test(peek) ||
+        /^\d+[.)]\s+/.test(peek) ||
+        /^>\s?/.test(peek)
+      ) {
+        break;
+      }
+      parts.push(cleanClipboardText(peek));
+      i += 1;
+    }
+    const content = parts.filter(Boolean).join(" ");
+    if (content) blocks.push(createBlock("paragraph", { content }));
+  }
+
+  return {
+    title,
+    blocks: blocks.length ? blocks : emptyDocument(),
+  };
+}
+
+/** Prefer HTML from Docs/Word; fall back to plain text. */
+export function clipboardToBlocks(
+  html: string | undefined,
+  plain: string | undefined,
+): PasteResult {
+  const plainText = plain ?? "";
+  const rich = (html ?? "").trim();
+  const hasUsefulHtml =
+    rich.length > 0 &&
+    /<(p|h[1-6]|ul|ol|li|blockquote|div|span)[\s>]/i.test(rich) &&
+    !/^<!--StartFragment-->\s*<!--EndFragment-->$/i.test(rich);
+
+  if (hasUsefulHtml) {
+    const fromHtml = htmlClipboardToBlocks(rich);
+    if (fromHtml.blocks.length > 1 || fromHtml.title || fromHtml.blocks[0]?.content) {
+      return fromHtml;
+    }
+  }
+
+  return plainClipboardToBlocks(plainText);
+}
+
+/** True when clipboard should replace the current block instead of inserting characters. */
+export function isStructuredPaste(html: string | undefined, plain: string | undefined): boolean {
+  const text = plain ?? "";
+  const rich = html ?? "";
+  if (/<(h[1-6]|ul|ol|li|blockquote|p)[\s>]/i.test(rich)) return true;
+  if (text.includes("\n")) return true;
+  if (/^#{1,6}\s+/m.test(text)) return true;
+  if (/^[-*•]\s+/m.test(text)) return true;
+  if (/^\d+[.)]\s+/m.test(text)) return true;
+  return false;
+}
