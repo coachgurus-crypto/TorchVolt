@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatDate } from "@/lib/format";
-import { renderPostContent } from "@/lib/blocks";
+import { renderStoredContent } from "@/lib/richText";
 import { fetchPublishedPost, type BlogPost } from "@/lib/posts";
 
 function slugFromLocation() {
@@ -73,7 +73,7 @@ export default function BlogPostReaderPage() {
           ) : null}
           <div
             className="blog-prose mt-10"
-            dangerouslySetInnerHTML={{ __html: renderPostContent(post.content) }}
+            dangerouslySetInnerHTML={{ __html: renderStoredContent(post.content) }}
           />
           <div className="mt-12 border-t border-slate-200 pt-8">
             <Link

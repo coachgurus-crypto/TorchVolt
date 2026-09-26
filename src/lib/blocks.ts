@@ -175,7 +175,7 @@ export function renderBlocksHtml(blocks: EditorBlock[]): string {
       }
     })
     .filter(Boolean)
-    .join("\n");
+    .join("");
 }
 
 /** Render stored post content (block JSON or legacy markdown). */

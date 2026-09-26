@@ -161,6 +161,122 @@ body {
   border-top: 1px solid #e2e8f0;
 }
 
+.blog-prose table,
+.blog-prose .cms-table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.blog-prose th,
+.blog-prose td {
+  border: 1px solid #e2e8f0;
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.blog-prose th {
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 650;
+}
+
+.blog-prose tr:nth-child(even) td {
+  background: #fafafa;
+}
+
+/* TipTap rich editor (admin) */
+.rich-editor-surface .ProseMirror {
+  min-height: 28rem;
+  outline: none;
+}
+
+.rich-editor-surface .ProseMirror p {
+  margin: 0 0 0.9rem;
+}
+
+.rich-editor-surface .ProseMirror h2 {
+  margin: 1.5rem 0 0.6rem;
+  font-size: 1.55rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #fafafa;
+}
+
+.rich-editor-surface .ProseMirror h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #f4f4f5;
+}
+
+.rich-editor-surface .ProseMirror ul,
+.rich-editor-surface .ProseMirror ol {
+  margin: 0 0 1rem 1.25rem;
+}
+
+.rich-editor-surface .ProseMirror li {
+  margin: 0.3rem 0;
+}
+
+.rich-editor-surface .ProseMirror blockquote {
+  margin: 1rem 0;
+  border-left: 3px solid rgba(251, 191, 36, 0.7);
+  padding-left: 0.9rem;
+  color: #a1a1aa;
+  font-style: italic;
+}
+
+.rich-editor-surface .ProseMirror a {
+  color: #4ade80;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rich-editor-surface .ProseMirror img {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.rich-editor-surface .ProseMirror hr {
+  margin: 1.5rem 0;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rich-editor-surface .ProseMirror p.is-editor-empty:first-child::before {
+  color: #52525b;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.rich-editor-surface .ProseMirror table,
+.rich-editor-surface .ProseMirror .cms-table {
+  width: 100%;
+  margin: 1rem 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.rich-editor-surface .ProseMirror th,
+.rich-editor-surface .ProseMirror td {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.5rem 0.65rem;
+  vertical-align: top;
+}
+
+.rich-editor-surface .ProseMirror th {
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 600;
+  color: #fafafa;
+}
+
 /* —— Admin studio (Linear / Notion) —— */
 .admin-studio {
   min-height: 100vh;

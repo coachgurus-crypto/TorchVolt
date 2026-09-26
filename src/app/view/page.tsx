@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { renderPostContent } from "@/lib/blocks";
+import { renderStoredContent } from "@/lib/richText";
 import {
   lookupPath,
   permalinkHref,
@@ -166,7 +166,7 @@ export default function CmsViewPage() {
           ) : null}
           <div
             className="blog-prose mt-10"
-            dangerouslySetInnerHTML={{ __html: renderPostContent(item.content) }}
+            dangerouslySetInnerHTML={{ __html: renderStoredContent(item.content) }}
           />
           {item.type === "post" ? (
             <div className="mt-12 border-t border-slate-200 pt-8">

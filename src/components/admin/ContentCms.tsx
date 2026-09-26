@@ -2,16 +2,12 @@
 
 import { ArrowLeft, Plus, Settings2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { BlockEditor } from "@/components/admin/BlockEditor";
 import { PageSettingsPanel } from "@/components/admin/PageSettingsPanel";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import {
-  emptyDocument,
-  clipboardToBlocks,
-  isStructuredPaste,
-  parseBlocks,
-  serializeBlocks,
-  type EditorBlock,
-} from "@/lib/blocks";
+  contentToEditorHtml,
+  normalizeEditorHtml,
+} from "@/lib/richText";
 import {
   createCategory,
   createContent,
@@ -42,7 +38,7 @@ type Editing = {
   metaDescription: string;
   featuredImage: string;
   tags: string[];
-  blocks: EditorBlock[];
+  html: string;
 };
 
 function emptyDraft(): Editing {
@@ -58,7 +54,7 @@ function emptyDraft(): Editing {
     metaDescription: "",
     featuredImage: "",
     tags: [],
-    blocks: emptyDocument(),
+    html: "",
   };
 }
 
@@ -150,7 +146,7 @@ export function ContentCms({
       title: editing.title.trim(),
       slug: (editing.slug || slugifyTitle(editing.title)).trim(),
       excerpt: editing.excerpt.trim(),
-      content: serializeBlocks(editing.blocks),
+      content: normalizeEditorHtml(editing.html),
       status: nextStatus,
       parentId: isPage ? editing.parentId : null,
       categoryId: isPage ? null : editing.categoryId,
@@ -242,7 +238,7 @@ export function ContentCms({
           </p>
         ) : null}
 
-        <div className="mx-auto max-w-[680px] px-6 pt-16">
+        <div className="mx-auto max-w-[720px] px-6 pt-16 pb-4">
           <input
             value={editing.title}
             onChange={(e) => {
@@ -258,75 +254,51 @@ export function ContentCms({
               );
             }}
             onPaste={(e) => {
-              const html = e.clipboardData.getData("text/html") || undefined;
-              const plain = e.clipboardData.getData("text/plain") || undefined;
-              if (!isStructuredPaste(html, plain)) {
-                if (plain && /^#{1,6}\s+/.test(plain) && !plain.includes("\n")) {
-                  e.preventDefault();
-                  const title = plain.replace(/^#{1,6}\s+/, "").trim();
-                  setEditing((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          title,
-                          slug: slugTouched ? prev.slug : slugifyTitle(title),
-                        }
-                      : prev,
-                  );
-                }
-                return;
+              const plain = e.clipboardData.getData("text/plain") || "";
+              if (plain.includes("\n") || plain.length > 160) {
+                e.preventDefault();
+                const lines = plain
+                  .replace(/\r\n/g, "\n")
+                  .split("\n")
+                  .map((l) => l.replace(/^#+\s+/, "").trim())
+                  .filter(Boolean);
+                const title = lines[0]?.slice(0, 160) || "";
+                setEditing((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        title: title || prev.title,
+                        slug:
+                          slugTouched || !title
+                            ? prev.slug
+                            : slugifyTitle(title),
+                      }
+                    : prev,
+                );
+              } else if (/^#{1,6}\s+/.test(plain)) {
+                e.preventDefault();
+                const title = plain.replace(/^#{1,6}\s+/, "").trim();
+                setEditing((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        title,
+                        slug: slugTouched ? prev.slug : slugifyTitle(title),
+                      }
+                    : prev,
+                );
               }
-              e.preventDefault();
-              const pasted = clipboardToBlocks(html, plain);
-              const title =
-                pasted.title ||
-                (pasted.blocks[0]?.type === "heading"
-                  ? pasted.blocks[0].content
-                  : pasted.blocks[0]?.type === "paragraph"
-                    ? pasted.blocks[0].content.slice(0, 120)
-                    : "");
-              const bodyBlocks =
-                pasted.title || pasted.blocks[0]?.type === "heading"
-                  ? pasted.title
-                    ? pasted.blocks
-                    : pasted.blocks.slice(1)
-                  : pasted.blocks;
-              setEditing((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      title: title || prev.title,
-                      slug:
-                        slugTouched || !title
-                          ? prev.slug
-                          : slugifyTitle(title),
-                      blocks: bodyBlocks.length ? bodyBlocks : emptyDocument(),
-                    }
-                  : prev,
-              );
             }}
             placeholder="Untitled"
-            className="w-full border-0 bg-transparent text-[42px] font-semibold leading-[1.1] tracking-[-0.045em] text-zinc-50 outline-none placeholder:text-zinc-700"
+            className="mb-6 w-full border-0 bg-transparent text-[42px] font-semibold leading-[1.1] tracking-[-0.045em] text-zinc-50 outline-none placeholder:text-zinc-700"
+          />
+          <RichTextEditor
+            value={editing.html}
+            onChange={(html) =>
+              setEditing((prev) => (prev ? { ...prev, html } : prev))
+            }
           />
         </div>
-
-        <BlockEditor
-          blocks={editing.blocks}
-          onChange={(blocks) =>
-            setEditing((prev) => (prev ? { ...prev, blocks } : prev))
-          }
-          onSuggestTitle={(title) =>
-            setEditing((prev) =>
-              prev && !prev.title.trim()
-                ? {
-                    ...prev,
-                    title,
-                    slug: slugTouched ? prev.slug : slugifyTitle(title),
-                  }
-                : prev,
-            )
-          }
-        />
 
         <PageSettingsPanel
           open={settingsOpen}
@@ -463,7 +435,7 @@ export function ContentCms({
                   metaDescription: item.metaDescription ?? "",
                   featuredImage: item.featuredImage ?? "",
                   tags: item.tags ?? [],
-                  blocks: parseBlocks(item.content),
+                  html: contentToEditorHtml(item.content),
                 });
                 setSlugTouched(true);
                 setSettingsOpen(false);
