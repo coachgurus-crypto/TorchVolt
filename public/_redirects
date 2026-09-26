@@ -1,4 +1,17 @@
-/blog/* /view/index.html 200
-/:slug /view/index.html 200
-/:parent/:child /view/index.html 200
-/:a/:b/:c /view/index.html 200
+# Reserved app routes (Next static export emits *.html)
+/admin /admin.html 200
+/admin/ /admin.html 200
+/size /size.html 200
+/size/ /size.html 200
+/blog /blog.html 200
+/blog/ /blog.html 200
+/read /read.html 200
+/read/ /read.html 200
+/view /view.html 200
+/view/ /view.html 200
+
+# CMS permalinks → client view shell
+/blog/* /view.html 200
+/:slug /view.html 200
+/:parent/:child /view.html 200
+/:a/:b/:c /view.html 200
