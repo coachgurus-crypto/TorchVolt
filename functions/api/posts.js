@@ -17,9 +17,9 @@ function json(data, status = 200) {
 }
 
 function requireAdmin(context) {
-  const pin = context.request.headers.get("X-Admin-Pin") ?? "";
-  const expected = context.env.DASHBOARD_PIN;
-  return Boolean(expected && pin === expected);
+  const pin = (context.request.headers.get("X-Admin-Pin") ?? "").trim();
+  const expected = String(context.env.DASHBOARD_PIN ?? "").trim();
+  return Boolean(expected && pin && pin === expected);
 }
 
 function slugify(value) {

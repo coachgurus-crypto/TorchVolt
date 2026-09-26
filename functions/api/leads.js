@@ -87,10 +87,16 @@ export const onRequestPost = async (context) => {
 
 /** @type {PagesFunction<Env>} */
 export const onRequestGet = async (context) => {
-  const pin = context.request.headers.get("X-Admin-Pin") ?? "";
-  const expected = context.env.DASHBOARD_PIN;
+  const pin = (context.request.headers.get("X-Admin-Pin") ?? "").trim();
+  const expected = String(context.env.DASHBOARD_PIN ?? "").trim();
 
-  if (!expected || pin !== expected) {
+  if (!expected) {
+    return json(
+      { error: "Admin PIN is not configured on the server (DASHBOARD_PIN)." },
+      503,
+    );
+  }
+  if (!pin || pin !== expected) {
     return json({ error: "Unauthorized" }, 401);
   }
 

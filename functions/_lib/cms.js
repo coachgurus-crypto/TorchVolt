@@ -21,9 +21,22 @@ export function json(data, status = 200) {
 }
 
 export function requireAdmin(context) {
-  const pin = context.request.headers.get("X-Admin-Pin") ?? "";
-  const expected = context.env.DASHBOARD_PIN;
-  return Boolean(expected && pin === expected);
+  const pin = (context.request.headers.get("X-Admin-Pin") ?? "").trim();
+  const expected = String(context.env.DASHBOARD_PIN ?? "").trim();
+  if (!expected) return false;
+  return Boolean(pin && pin === expected);
+}
+
+/** Distinguishes missing server config from a wrong PIN (no secrets leaked). */
+export function adminAuthError(context) {
+  const expected = String(context.env.DASHBOARD_PIN ?? "").trim();
+  if (!expected) {
+    return {
+      error: "Admin PIN is not configured on the server (DASHBOARD_PIN).",
+      status: 503,
+    };
+  }
+  return { error: "Unauthorized", status: 401 };
 }
 
 export function slugify(value) {

@@ -35,6 +35,7 @@ export default function AdminDashboardPage() {
         setError(err.message);
         sessionStorage.removeItem(PIN_KEY);
         setPin("");
+        setDraftPin("");
       });
     return () => {
       cancelled = true;
