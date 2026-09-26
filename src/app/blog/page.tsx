@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BlogShell, BlogSidebar } from "@/components/BlogSidebar";
 import { fetchLiveContent, permalinkHref, type CmsContent } from "@/lib/content";
 import { formatDate } from "@/lib/format";
 
@@ -28,7 +29,7 @@ export default function BlogIndexPage() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
+    <BlogShell sidebar={<BlogSidebar posts={posts} />}>
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-solar">
         Blog
       </p>
@@ -72,6 +73,6 @@ export default function BlogIndexPage() {
           </li>
         ))}
       </ul>
-    </div>
+    </BlogShell>
   );
 }

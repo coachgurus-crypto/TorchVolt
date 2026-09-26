@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BlogShell, BlogSidebar } from "@/components/BlogSidebar";
 import { formatDate } from "@/lib/format";
 import { renderStoredContent } from "@/lib/richText";
 import { fetchPublishedPost, type BlogPost } from "@/lib/posts";
@@ -12,7 +13,6 @@ function slugFromLocation() {
   const fromQuery = params.get("slug");
   if (fromQuery) return fromQuery;
   const parts = window.location.pathname.split("/").filter(Boolean);
-  // /blog/my-slug or /read (with rewrite keeping /blog/my-slug in address bar)
   if (parts[0] === "blog" && parts[1] && parts[1] !== "post") return parts[1];
   return "";
 }
@@ -54,7 +54,7 @@ export default function BlogPostReaderPage() {
   }, [slug]);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
+    <BlogShell sidebar={<BlogSidebar excludeId={post?.id} />}>
       <Link href="/blog" className="text-sm font-semibold text-slate-600 hover:text-navy">
         ← All posts
       </Link>
@@ -85,6 +85,6 @@ export default function BlogPostReaderPage() {
           </div>
         </article>
       ) : null}
-    </div>
+    </BlogShell>
   );
 }

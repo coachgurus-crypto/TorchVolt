@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BlogShell, BlogSidebar } from "@/components/BlogSidebar";
 import { renderStoredContent } from "@/lib/richText";
 import {
   lookupPath,
@@ -87,13 +88,15 @@ export default function CmsViewPage() {
     };
   }, [path, item, category]);
 
+  const isBlogSurface =
+    Boolean(category) || item?.type === "post" || path.startsWith("blog");
   const backHref = item?.type === "page" ? "/" : "/blog";
   const backLabel = item?.type === "page" ? "← Home" : "← All posts";
   const seoTitle = item?.seoTitle || item?.title;
   const seoDescription = item?.metaDescription || item?.excerpt;
 
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
+  const main = (
+    <>
       {item ? (
         <>
           <title>{`${seoTitle} · TorchVolt`}</title>
@@ -144,7 +147,7 @@ export default function CmsViewPage() {
             <img
               src={item.featuredImage}
               srcSet={cmsSrcSet(item.featuredImage)}
-              sizes="(min-width: 768px) 720px, 100vw"
+              sizes="(min-width: 1024px) 720px, 100vw"
               alt=""
               width={1200}
               height={630}
@@ -180,6 +183,16 @@ export default function CmsViewPage() {
           ) : null}
         </article>
       ) : null}
-    </div>
+    </>
   );
+
+  if (isBlogSurface) {
+    return (
+      <BlogShell sidebar={<BlogSidebar excludeId={item?.id} posts={posts.length ? posts : undefined} />}>
+        {main}
+      </BlogShell>
+    );
+  }
+
+  return <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">{main}</div>;
 }
