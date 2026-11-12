@@ -1,0 +1,124 @@
+.shop { --navy: #0b182b; --gold: #ffc400; --green: #087632; --line: #d8e0e9; --muted: #47566b; --nav-height: 70px; background: #fafbfc; color: var(--navy); font-size: 16px; line-height: 1.55; min-height: 100vh; display: flex; flex-direction: column; }
+.shop #shop-content { flex: 1; scroll-margin-top: var(--nav-height); }
+.shop-wrap { width: min(1160px, calc(100% - 64px)); margin-inline: auto; }
+.shop :focus-visible { outline: 3px solid #9a6700; outline-offset: 3px; }
+.shop-skip { position: fixed; z-index: 60; top: 10px; left: 10px; background: white; padding: 8px 14px; clip-path: inset(50%); }
+.shop-skip:focus { clip-path: none; }
+.shop-header { background: var(--navy); color: white; position: sticky; top: 0; z-index: 30; }
+.shop-nav { min-height: var(--nav-height); display: flex; gap: 18px; align-items: center; }
+.shop-logo { display: inline-flex; align-items: center; gap: 7px; font-size: 25px; font-weight: 800; letter-spacing: -.04em; white-space: nowrap; }
+.shop-logo svg { color: var(--gold); flex: none; }
+.shop-nav nav { display: flex; gap: 25px; margin-left: auto; font-weight: 650; font-size: 15px; }
+.shop-current { color: var(--gold); text-decoration: underline; text-underline-offset: 9px; text-decoration-thickness: 2px; }
+.shop-btn { min-height: 44px; display: inline-flex; justify-content: center; align-items: center; gap: 8px; border: 1px solid transparent; padding: 9px 14px; border-radius: 8px; font-weight: 730; line-height: 1.25; font-size: 15px; text-align: center; cursor: pointer; }
+.shop-btn svg { flex: none; }
+.shop-btn:disabled, .shop-stepper button:disabled { opacity: .55; cursor: not-allowed; }
+.shop-gold { background: var(--gold); color: var(--navy); }
+.shop-gold:hover { background: #efb900; }
+.shop-ghost { border-color: currentColor; }
+.shop-ghost:hover { background: #7c8ba51a; }
+.shop-added { background: #e8f5eb; border-color: var(--green); color: var(--green); }
+.shop-intro { background: #fbf7e9; padding-block: 32px; }
+.shop-intro-inner { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .95fr) auto; align-items: center; gap: 22px; }
+.shop-rule { display: block; width: 40px; height: 3px; margin-bottom: 12px; background: var(--gold); }
+.shop h1, .shop h2, .shop h3 { letter-spacing: -.04em; line-height: 1.15; font-weight: 780; }
+.shop h1 { font-size: clamp(30px, 3vw, 43px); }
+.shop-intro p, .shop-muted, .shop-card p, .shop-results, .shop-cart-line p { color: var(--muted); }
+.shop-intro p { margin-top: 6px; }
+.shop-search { display: flex; align-items: center; gap: 9px; background: white; border: 1px solid #8392a5; border-radius: 8px; padding-inline: 12px; color: var(--muted); }
+.shop-search:focus-within { outline: 2px solid #9a6700; outline-offset: 2px; }
+.shop-search svg { flex: none; }
+.shop-search input { width: 100%; min-width: 0; min-height: 46px; color: var(--navy); outline: none; }
+.shop-help, .shop-link, .shop-back { color: var(--green); text-decoration: underline; text-underline-offset: 3px; font-weight: 650; }
+.shop-link { cursor: pointer; }
+.shop-catalog { padding-block: 22px 55px; }
+.shop-categories { display: flex; flex-wrap: wrap; gap: 3px; border-bottom: 1px solid var(--line); }
+.shop-categories button { min-height: 44px; padding: 8px 14px; font-size: 15px; font-weight: 700; border: solid transparent; border-width: 0 0 2px; border-radius: 7px 7px 0 0; cursor: pointer; }
+.shop-categories button:hover, .shop-categories button[aria-pressed="true"] { background: #fff3d0; }
+.shop-categories button[aria-pressed="true"] { border-bottom-color: #b78000; }
+.shop-results { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-block: 16px 20px; font-size: 14px; }
+.shop-results select { background: white; border: 1px solid #aab7c5; border-radius: 7px; min-height: 42px; padding: 6px 10px; color: var(--navy); }
+.shop-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.shop-card { display: flex; flex-direction: column; border-radius: 10px; background: white; border: 1px solid var(--line); overflow: hidden; }
+.shop-card > img { width: 100%; height: auto; aspect-ratio: 1.08; object-fit: cover; background: #eff1f4; }
+.shop-card-body { flex: 1; display: flex; flex-direction: column; padding: 14px; gap: 6px; }
+.shop-card h2 { font-size: 20px; }
+.shop-card p { font-size: 14px; }
+.shop-card strong { font-size: 22px; margin-block: auto 6px; padding-top: 4px; }
+.shop-card button { width: 100%; }
+.shop-empty { padding: 30px 18px; border: 1px dashed #b4c0cc; border-radius: 9px; background: white; }
+.shop-empty h2 { margin-block: 7px; font-size: 22px; }
+.shop-empty a, .shop-empty button { margin-top: 12px; }
+.shop-footer { background: #eef2f6; border-top: 1px solid var(--line); padding-block: 20px; color: var(--muted); font-size: 14px; }
+.shop-footer .shop-wrap { display: flex; flex-wrap: wrap; gap: 12px 20px; }
+.shop-footer a { color: var(--navy); font-weight: 650; }
+.shop-footer a:last-child { margin-left: auto; }
+.shop-drawer { position: fixed; inset: var(--nav-height) 0 0 auto; margin: 0; width: min(100%, 448px); max-width: none; height: calc(100dvh - var(--nav-height)); max-height: none; border: none; background: white; color: var(--navy); padding: 0; box-shadow: -10px 0 35px #0b182b26; }
+.shop-drawer::backdrop { background: linear-gradient(transparent var(--nav-height), #0b182b68 var(--nav-height)); }
+.shop-drawer-inner { height: 100%; display: flex; flex-direction: column; }
+.shop-drawer-heading { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 17px 20px 10px; }
+.shop-drawer-heading h2 { font-size: 28px; }
+.shop-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 7px; cursor: pointer; }
+.shop-icon:hover { background: #eef2f6; }
+.shop-drawer-items { overflow: auto; overscroll-behavior: contain; padding: 8px 20px 16px; flex: 1; }
+.shop-notice { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: 8px; background: #e3f3e6; color: #065c27; font-weight: 700; }
+.shop-notice svg { flex: none; }
+.shop-cart-line { display: grid; grid-template-columns: 72px minmax(0,1fr); gap: 7px 11px; border-bottom: 1px solid var(--line); padding: 14px 0; }
+.shop-cart-line img { border-radius: 7px; grid-row: span 2; }
+.shop-cart-line h3 { font-size: 17px; }
+.shop-cart-line p { font-size: 13px; margin-top: 3px; }
+.shop-cart-line > strong { grid-column: 2; }
+.shop-line-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 5px 12px; margin-top: 8px; font-size: 14px; }
+.shop-stepper { display: inline-flex; align-items: center; border: 1px solid #aab7c5; border-radius: 7px; }
+.shop-stepper span { text-align: center; min-width: 25px; }
+.shop-stepper button { display: grid; place-items: center; width: 36px; min-height: 40px; cursor: pointer; }
+.shop-stepper button:not(:disabled):hover { background: #eef2f6; }
+.shop-drawer-summary { border-top: 1px solid var(--line); padding: 14px 20px max(16px, env(safe-area-inset-bottom)); }
+.shop-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 21px; }
+.shop-drawer-summary .shop-btn, .shop-checkout-card > .shop-btn { width: 100%; margin-top: 14px; }
+.shop-drawer-summary > button { display: block; margin-inline: auto; margin-top: 6px; min-height: 44px; }
+.shop-muted { font-size: 14px; }
+.shop-checkout { padding-block: 28px 58px; }
+.shop-back { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 12px; }
+.shop-demo-note { margin-block: 12px 20px; color: #35503c; background: #eaf4ec; padding: 12px 14px; border-radius: 8px; }
+.shop-checkout-grid { display: grid; grid-template-columns: 1.05fr .95fr; align-items: start; gap: 22px; }
+.shop-checkout-card { min-width: 0; background: white; border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+.shop-checkout-card h2, .shop-checkout-card legend { font-weight: 760; font-size: 23px; }
+.shop-checkout-card h2 + p, .shop-checkout-card legend + p { margin-block: 8px; color: var(--muted); }
+.shop-checkout-card .shop-notice { margin-bottom: 12px; }
+.shop-choice { display: flex; align-items: flex-start; gap: 10px; padding: 12px; margin-top: 10px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.shop-choice:has(input:checked) { background: #fff7de; border-color: #b78000; }
+.shop-choice input { margin-top: 5px; accent-color: var(--green); }
+.shop-choice small, .shop-checkout-lines span { display: block; color: var(--muted); font-size: 14px; }
+.shop-summary-heading { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.shop-checkout-lines { margin-block: 10px 14px; }
+.shop-checkout-lines li { display: grid; grid-template-columns: 49px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.shop-checkout-lines img { border-radius: 5px; }
+body:has(.shop-drawer[open]) { overflow: hidden; }
+@media (max-width: 960px) {
+  .shop-wrap { width: calc(100% - 36px); }
+  .shop-intro-inner { grid-template-columns: minmax(0, 1fr) auto; }
+  .shop-intro-inner > div { grid-column: 1/-1; }
+  .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 650px) {
+  .shop { --nav-height: 62px; }
+  .shop-nav { gap: 10px; justify-content: space-between; }
+  .shop-nav nav, .shop-header-checkout { display: none; }
+  .shop-intro { padding-block: 22px; }
+  .shop-intro-inner, .shop-checkout-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .shop-categories button { font-size: 13px; padding-inline: 8px; }
+  .shop-grid { gap: 10px; }
+  .shop-card-body { padding: 9px; }
+  .shop-card h2 { font-size: 16px; }
+  .shop-card strong { font-size: 18px; }
+  .shop-card .shop-btn { font-size: 13px; padding-inline: 5px; }
+  .shop-drawer { inset: 0 0 0 auto; height: 100dvh; }
+  .shop-drawer::backdrop { background: #0b182b68; }
+  .shop-checkout-card { padding: 14px; }
+  .shop-checkout-lines li { grid-template-columns: 42px minmax(0, 1fr); }
+  .shop-checkout-lines li > strong { grid-column: 2; }
+}
+
+.shop-photo-empty { display: grid; place-items: center; aspect-ratio: 1.08; background: #eff1f4; color: var(--muted); }
+.shop-cart-line .shop-photo-empty { grid-row: span 2; border-radius: 7px; }

@@ -1,14 +1,16 @@
 "use client";
 
+import { File, House, LockKeyhole, Newspaper, Tag, Users, Zap } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ContentCms } from "@/components/admin/ContentCms";
 import { CustomersPanel } from "@/components/admin/CustomersPanel";
 import { HomepageEditor } from "@/components/admin/HomepageEditor";
+import { ProductsPanel } from "@/components/admin/ProductsPanel";
 import { fetchLeads } from "@/lib/leads";
 
 const PIN_KEY = "torchvolt.admin.pin";
 
-type Tab = "homepage" | "customers" | "blog" | "pages";
+type Tab = "homepage" | "customers" | "blog" | "pages" | "products";
 
 export default function AdminDashboardPage() {
   const [pin, setPin] = useState("");
@@ -88,31 +90,31 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="admin-studio flex min-h-screen">
-      <aside className="flex w-[220px] shrink-0 flex-col border-r border-white/[0.06] bg-[#0c0c0e] px-3 py-4">
-        <p className="px-2 text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">
-          TorchVolt
-        </p>
-        <nav className="mt-6 flex flex-col gap-0.5">
+    <div className="admin-studio flex min-h-screen flex-col md:flex-row">
+      <aside className="flex shrink-0 flex-col border-b border-white/10 bg-[#0b1932] px-3 py-5 md:w-[220px] md:border-r md:border-b-0">
+        <p className="flex items-center gap-2 px-2 text-lg font-extrabold tracking-wide text-white"><Zap size={27} fill="currentColor" className="text-[#ffc400]" aria-hidden="true" />TORCHVOLT</p>
+        <nav className="my-3 flex flex-wrap gap-1 md:mt-7 md:flex-col">
           {(
             [
-              ["homepage", "Homepage"],
-              ["blog", "Posts"],
-              ["pages", "Pages"],
-              ["customers", "Customers"],
+              ["homepage", "Homepage", House],
+              ["blog", "Posts", Newspaper],
+              ["pages", "Pages", File],
+              ["products", "Products", Tag],
+              ["customers", "Customers", Users],
             ] as const
-          ).map(([id, label]) => (
+          ).map(([id, label, Icon]) => (
             <button
               key={id}
               type="button"
               onClick={() => setTab(id)}
-              className={`rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition ${
+              aria-current={tab === id ? "page" : undefined}
+              className={`flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition ${
                 tab === id
-                  ? "bg-white/[0.07] text-zinc-50"
-                  : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-200"
+                  ? "bg-[#ffc400] text-[#0b1932]"
+                  : "text-slate-200 hover:bg-white/10 hover:text-white"
               }`}
             >
-              {label}
+              <Icon size={18} className="shrink-0" aria-hidden="true" />{label}
             </button>
           ))}
         </nav>
@@ -124,15 +126,17 @@ export default function AdminDashboardPage() {
               setPin("");
               setDraftPin("");
             }}
-            className="text-[12px] text-zinc-600 transition hover:text-zinc-300"
+            className="flex min-h-10 items-center gap-3 text-sm text-slate-300 transition hover:text-white"
           >
-            Lock
+            <LockKeyhole size={18} aria-hidden="true" />Lock
           </button>
         </div>
       </aside>
 
-      <section className="min-w-0 flex-1">
-        {tab === "customers" ? (
+      <section className={`min-w-0 flex-1 ${tab === "products" ? "bg-[#f4f5f7]" : ""}`}>
+        {tab === "products" ? (
+          <div className="p-4 md:p-6"><ProductsPanel pin={pin} onAuthError={onAuthError} /></div>
+        ) : tab === "customers" ? (
           <div className="p-6 [&_*]:border-white/10 [&_a]:text-zinc-100 [&_article]:bg-[#111113] [&_article]:text-zinc-200 [&_button]:text-zinc-200 [&_h1]:text-zinc-50 [&_h2]:text-zinc-50 [&_p]:text-zinc-400 [&_ul]:border-white/10 [&_ul]:bg-[#111113]">
             <CustomersPanel pin={pin} onAuthError={onAuthError} />
           </div>

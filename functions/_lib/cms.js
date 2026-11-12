@@ -3,6 +3,7 @@ export const RESERVED_SLUGS = new Set([
   "api",
   "size",
   "services",
+  "shop",
   "blog",
   "read",
   "view",

@@ -22,6 +22,14 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Learn More
 
+### Shop inventory
+
+Open **Admin → Products** to create a listing, set a price in whole naira, and update stock. A draft is private until you check **Publish in the shop**. To remove a listing from the shop while keeping its record, uncheck publication. Low stock means one to five units.
+
+The inventory table is created by `migrations/0006_products.sql`. Apply the migration to the intended D1 database before enabling this feature there. For local testing, use Wrangler's local D1 and Pages preview with the same persistence directory. Provide a local dashboard PIN via the preview configuration. The static preview alone cannot save inventory.
+
+Checkout is a demo: cart quantities respect the catalog's reported stock, but checkout does not reserve stock, create an order or take payment.
+
 To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.

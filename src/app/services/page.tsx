@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 const chat = whatsappUrl("Hello TorchVolt, I’d like to discuss a solar project.");
-const navigation = [["Home", "/"], ["Services", "/services"], ["How it works", "#installation-process"], ["FAQs", "#service-faqs"]] as const;
+const navigation = [["Home", "/"], ["Services", "/services"], ["Shop", "/shop"], ["How it works", "#installation-process"], ["FAQs", "#service-faqs"]] as const;
 const sizing = [
   ["Select your appliances", "Tell us what you want to keep running."],
   ["Choose your backup requirements", "Tell us how long you need power during outages."],

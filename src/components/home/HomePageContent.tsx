@@ -144,6 +144,7 @@ export function HomePageContent() {
               <ChevronDown size={15} />
             </a>
             <Link href="/services">Services</Link>
+            <Link href="/shop">Shop</Link>
             <a href="#how">{copy.header.howItWorks}</a>
             <a href="#faqs">FAQs</a>
           </nav>
@@ -181,6 +182,7 @@ export function HomePageContent() {
               </a>
             ))}
             <Link href="/services" onClick={() => setMenuOpen(false)}>Services</Link>
+            <Link href="/shop" onClick={() => setMenuOpen(false)}>Shop</Link>
             <Link href="/blog">Blog</Link>
           </nav>
         )}

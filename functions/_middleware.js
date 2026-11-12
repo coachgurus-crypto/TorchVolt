@@ -2,7 +2,7 @@ import { isCmsCandidatePath, resolveIncomingPath } from "./_lib/resolver.js";
 import { normalizePath } from "./_lib/cms.js";
 import { bootstrapScript, CMS_CACHE, headTags, seoTitle } from "./_lib/seo.js";
 
-const PASS_EXACT = new Set(["", "admin", "api", "size", "blog", "read", "view", "services"]);
+const PASS_EXACT = new Set(["", "admin", "api", "size", "blog", "read", "view", "services", "shop", "shop/checkout"]);
 
 /** @param {EventContext} context */
 export async function onRequest(context) {
