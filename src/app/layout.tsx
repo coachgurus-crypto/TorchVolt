@@ -22,11 +22,12 @@ const instrument = Instrument_Serif({
 
 export const metadata: Metadata = {
   title: {
-    default: "TorchVolt — Solar for your home or office, with a free quote",
+    default: "Best Solar Installation Company in Ibadan | TorchVolt",
     template: "%s · TorchVolt",
   },
   description:
-    "Tell us what you need to keep running at home or in the office. TorchVolt recommends a package and sends you a free quote.",
+    "TorchVolt is a trusted solar installation company in Ibadan — also serving Lagos and Abuja. Size your system and get a free quote.",
+  metadataBase: new URL("https://torchvolt.ng"),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -60,11 +60,20 @@ function emptyQty() {
   return Object.fromEntries(APPLIANCES.map((a) => [a.id, 0]));
 }
 
-export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
+function seededQuantities(ids: string[]) {
+  const initial = emptyQty();
+  ids.forEach((id) => { if (id in initial) initial[id] = 1; });
+  return initial;
+}
+
+export function SizerWizard({ embedded = false, initialAppliances = [] }: {
+  embedded?: boolean;
+  initialAppliances?: string[];
+}) {
   const [screen, setScreen] = useState<Screen>("who");
   const [city, setCity] = useState("Ibadan");
   const [siteKind, setSiteKind] = useState<SiteKind | null>(null);
-  const [quantities, setQuantities] = useState<Record<string, number>>(emptyQty);
+  const [quantities, setQuantities] = useState<Record<string, number>>(() => seededQuantities(initialAppliances));
   const [sizes, setSizes] = useState<Record<string, string>>(defaultSizes);
   const [hours, setHours] = useState<Record<string, number>>({});
   const [gridProfileId, setGridProfileId] = useState<GridProfileId>("outages_24_7");
@@ -242,7 +251,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                     onClick={() => {
                       setSiteKind("home");
                       setGridProfileId("outages_24_7");
-                      setQuantities(emptyQty());
+                      setQuantities(seededQuantities(initialAppliances));
                       setHours({});
                     }}
                   />
@@ -254,7 +263,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
                     onClick={() => {
                       setSiteKind("shop");
                       setGridProfileId("daytime_shop");
-                      setQuantities(emptyQty());
+                      setQuantities(seededQuantities(initialAppliances));
                       setHours({});
                     }}
                   />
@@ -644,7 +653,7 @@ export function SizerWizard({ embedded = false }: { embedded?: boolean }) {
             <button
               type="button"
               onClick={() => {
-                setQuantities(emptyQty());
+                setQuantities(seededQuantities(initialAppliances));
                 setHours({});
                 setSiteKind(null);
                 setUsesGenerator(null);

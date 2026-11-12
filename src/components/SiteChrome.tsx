@@ -15,9 +15,9 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <HomepageCopyProvider>
-      <SiteHeader />
+      {pathname !== "/" && <SiteHeader />}
       <main className="flex-1">{children}</main>
-      <SiteFooter />
+      {pathname !== "/" && <SiteFooter />}
     </HomepageCopyProvider>
   );
 }

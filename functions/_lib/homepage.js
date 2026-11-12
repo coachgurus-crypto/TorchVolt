@@ -10,40 +10,41 @@ export const DEFAULT_HOMEPAGE_COPY = {
     cta: "Get a free quote",
   },
   hero: {
-    cities: "Ibadan · Lagos · Abuja",
-    headline: "Solar that fits your home.",
-    headlineAccent: "A clear quote next.",
-    body: "Tell us what you need to keep running — fridge, fans, lights, AC — and we'll recommend a package, then send you a free quote.",
-    primaryCta: "Get a free quote",
-    secondaryCta: "How it works",
+    cities: "Solar installation in Ibadan",
+    headline: "Stop worrying about",
+    headlineAccent: "power outages.",
+    body: "Reliable solar and inverter systems designed around your needs and budget.",
+    primaryCta: "Get my free solar quote",
+    secondaryCta: "Chat on WhatsApp",
   },
   how: {
-    eyebrow: "Simple steps",
-    heading: "A few quick answers. Then your quote.",
+    eyebrow: "How it works",
+    heading: "A simple process from needs to quote.",
     steps: [
       {
-        title: "Pick what stays on",
-        body: "Fridge, fans, lights, TV, pump, AC — whatever matters in your home or office.",
+        title: "Choose appliances.",
+        body: "Pick the appliances you want to keep running.",
       },
       {
-        title: "Tell us about power cuts",
-        body: "All day, evenings only, or a shop that must stay open. That shapes the right package.",
+        title: "Tell us your needs.",
+        body: "Let us know how you want to use the system, from essential backup to a larger setup.",
       },
       {
-        title: "Get a free quote",
-        body: "We suggest a package that fits. A TorchVolt person follows up with clear pricing.",
+        title: "Get a recommendation and free quote.",
+        body: "We’ll size a suitable system for your needs and follow up with pricing.",
       },
     ],
   },
   size: {
-    eyebrow: "Free quote",
-    heading: "What do you want to keep on?",
-    body: "Pick the appliances for your home or office. We'll suggest a package that fits — then you can WhatsApp or call for your quote.",
+    eyebrow: "Start with your everyday",
+    heading: "What would you like to power?",
+    body: "Select the appliances you want to keep running, and we’ll recommend the right solar and inverter system for you.",
   },
   example: {
     eyebrow: "Example home · not your quote yet",
     title: "A typical 3-bedroom evening",
-    subtitle: "Fridge, fans, lights, decoder — and room for one AC when you need it.",
+    subtitle:
+      "Fridge, fans, lights, decoder — and room for one AC when you need it.",
     metrics: [
       { label: "Keeps running", value: "Fridge & lights" },
       { label: "Comfort", value: "Fans + 1 AC" },
@@ -56,7 +57,8 @@ export const DEFAULT_HOMEPAGE_COPY = {
       title: "Is this for a home or an office?",
       lead: "We'll only ask what matters for that place.",
       homeTitle: "A home",
-      homeBody: "Flat, duplex or compound. Fridge, fans, lights, maybe AC and a pump.",
+      homeBody:
+        "Flat, duplex or compound. Fridge, fans, lights, maybe AC and a pump.",
       shopTitle: "A shop or office",
       shopBody: "POS, lights, fans and fridge through business hours.",
     },
@@ -72,7 +74,8 @@ export const DEFAULT_HOMEPAGE_COPY = {
     loads: {
       title: "What must stay on when NEPA fails?",
       lead: "Tap each one, pick the size or HP if asked, then set how many and how long they run.",
-      emptyHint: "Tap each appliance you want on solar. Then pick the size or HP where it asks.",
+      emptyHint:
+        "Tap each appliance you want on solar. Then pick the size or HP where it asks.",
     },
     generator: {
       title: "Do you use a generator today?",
@@ -115,8 +118,8 @@ export const DEFAULT_HOMEPAGE_COPY = {
     },
   ],
   footer: {
-    heading: "Ready for solar at home or work? Talk to TorchVolt.",
-    body: "We help Nigerian homes and offices get the right solar package — then a clear quote.",
+    heading: "Looking for the best solar installation company in Ibadan?",
+    body: "Talk to TorchVolt — we help homes and offices get the right solar package, then a clear quote. Also in Lagos and Abuja.",
     quoteLink: "Get a free quote",
     blogLink: "Blog",
     whatsappLabel: "WhatsApp",
@@ -146,5 +149,8 @@ function deepMerge(base, patch) {
 }
 
 export function mergeHomepageCopy(raw) {
-  return deepMerge(DEFAULT_HOMEPAGE_COPY, raw && typeof raw === "object" ? raw : {});
+  return deepMerge(
+    DEFAULT_HOMEPAGE_COPY,
+    raw && typeof raw === "object" ? raw : {},
+  );
 }
