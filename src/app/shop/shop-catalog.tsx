@@ -1,23 +1,31 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Check, Search, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "./cart-store";
-import { maxQuantity, money } from "./catalog";
+import { maxQuantity, money, productHref } from "./catalog";
 import { ProductPhoto, useOpenCart } from "./shop-shell";
 
 import { useCatalog } from "./catalog-provider";
 import { productCategories } from "@/lib/products";
 
 const categories = ["All products", ...productCategories] as const;
+type Category = (typeof categories)[number];
 
 export function ShopCatalog() {
+  const categoryParam = useSearchParams().get("category");
+  const initialCategory = categories.find((name) => name === categoryParam) ?? "All products";
+  return <CatalogView key={initialCategory} initialCategory={initialCategory} />;
+}
+
+function CatalogView({ initialCategory }: { initialCategory: Category }) {
   const { cart } = useCart();
   const { products, mode } = useCatalog();
   const openCart = useOpenCart();
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<(typeof categories)[number]>("All products");
+  const [category, setCategory] = useState<Category>(initialCategory);
   const [sort, setSort] = useState("featured");
   const search = query.trim().toLowerCase();
   const filtered = products.filter((product) =>
@@ -51,9 +59,9 @@ export function ShopCatalog() {
             const limit = Math.min(maxQuantity, product.stock);
             return (
               <article className="shop-card" key={product.id}>
-                <ProductPhoto product={product} />
+                <Link className="shop-card-photo-link" href={productHref(product)} aria-label={`View ${product.name}`}><ProductPhoto product={product} /></Link>
                 <div className="shop-card-body">
-                  <h2>{product.name}</h2><p>{product.spec}</p><strong>{money(product.price)}</strong>
+                  <h2><Link href={productHref(product)}>{product.name}</Link></h2><p>{product.spec}</p><strong>{money(product.price)}</strong>
                   <button className={`shop-btn ${quantity ? "shop-added" : "shop-ghost"}`} type="button" disabled={quantity >= limit} onClick={() => openCart(product)} aria-label={product.stock ? `Add ${product.name} to cart` : `${product.name} is out of stock`}>
                     {quantity ? <Check size={18} aria-hidden="true" /> : <ShoppingBag size={18} aria-hidden="true" />}
                     {!product.stock ? "Out of stock" : quantity >= limit ? "Cart limit reached" : quantity ? `Added (${quantity}) · Add one more` : "Add to cart"}

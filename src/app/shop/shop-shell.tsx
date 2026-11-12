@@ -10,11 +10,11 @@ import { maxQuantity, money, type Product } from "./catalog";
 import { useCatalog } from "./catalog-provider";
 import { BRAND } from "@/lib/constants";
 
-const OpenCart = createContext<(product?: Product) => void>(() => {});
+const OpenCart = createContext<(product?: Product, quantity?: number) => void>(() => {});
 export const useOpenCart = () => useContext(OpenCart);
 
 export function ProductPhoto({ product, className }: { product: Product; className?: string }) {
-  if (!product.image) return <div className="shop-photo-empty"><Package aria-hidden="true" /><span className="sr-only">No product photo</span></div>;
+  if (!product.image) return <div className={`shop-photo-empty ${className ?? ""}`}><Package aria-hidden="true" /><span className="sr-only">No product photo</span></div>;
   return <Image unoptimized className={className} src={product.image} width={768} height={768} alt={product.name} />;
 }
 
@@ -24,13 +24,13 @@ export function ShopShell({ children }: { children: ReactNode }) {
   const [notice, setNotice] = useState("");
   const drawer = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
-  const open = (product?: Product) => {
+  const open = (product?: Product, quantity = 1) => {
     const dialog = drawer.current;
     if (!dialog) return;
     if (!dialog.open) opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     if (product) {
-      changeQuantity(product, 1);
-      setNotice(`${product.name} added to your cart`);
+      changeQuantity(product, quantity);
+      setNotice(`${quantity > 1 ? `${quantity} × ` : ""}${product.name} added to your cart`);
     } else setNotice("");
     if (!dialog.open) dialog.showModal();
   };

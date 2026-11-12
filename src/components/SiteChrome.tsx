@@ -8,7 +8,7 @@ import { HomepageCopyProvider } from "@/lib/useHomepageCopy";
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname().replace(/\/+$/, "") || "/";
   const studio = pathname === "/admin" || pathname.startsWith("/admin/");
-  const hasOwnChrome = pathname === "/" || pathname === "/services" || pathname === "/shop" || pathname === "/shop/checkout";
+  const hasOwnChrome = pathname === "/" || pathname === "/services" || pathname === "/shop" || pathname.startsWith("/shop/");
 
   if (studio) {
     return <main className="min-h-full">{children}</main>;

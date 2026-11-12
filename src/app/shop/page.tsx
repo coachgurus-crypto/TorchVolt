@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ShopCatalog } from "./shop-catalog";
 
 export const metadata: Metadata = {
@@ -7,4 +8,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-export default function ShopPage() { return <ShopCatalog />; }
+export default function ShopPage() {
+  return <Suspense fallback={<div className="shop-wrap shop-catalog" role="status">Loading products…</div>}><ShopCatalog /></Suspense>;
+}
