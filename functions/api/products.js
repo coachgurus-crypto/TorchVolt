@@ -99,3 +99,23 @@ async function write(context, update) {
 
 export const onRequestPost = (context) => write(context, false);
 export const onRequestPut = (context) => write(context, true);
+
+export const onRequestDelete = async (context) => {
+  if (!requireAdmin(context)) return respond({ error: "Unauthorized" }, 401);
+  const params = new URL(context.request.url).searchParams;
+  const id = params.get("id");
+  const revision = Number(params.get("revision"));
+  if (!id || id.length > 40 || !Number.isSafeInteger(revision) || revision < 1) {
+    return respond({ error: "A product and its current revision are required." }, 400);
+  }
+  try {
+    const result = await context.env.DB.prepare("DELETE FROM shop_products WHERE id=? AND revision=?")
+      .bind(id, revision).run();
+    if (!result.meta.changes) {
+      return respond({ error: "This product changed or no longer exists. Reload the list before deleting." }, 409);
+    }
+    return respond({ deleted: true });
+  } catch {
+    return respond({ error: "Could not delete the product." }, 503);
+  }
+};

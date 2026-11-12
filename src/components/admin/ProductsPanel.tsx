@@ -45,7 +45,8 @@ export function ProductsPanel({ pin, onAuthError }: { pin: string; onAuthError: 
   const [filter, setFilter] = useState("all");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [pending, setPending] = useState<"save" | "delete" | null>(null);
+  const busy = pending !== null;
 
   const load = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -74,8 +75,8 @@ export function ProductsPanel({ pin, onAuthError }: { pin: string; onAuthError: 
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!draft || saving) return;
-    setSaving(true);
+    if (!draft || busy) return;
+    setPending("save");
     setError("");
     setNotice("");
     try {
@@ -98,7 +99,35 @@ export function ProductsPanel({ pin, onAuthError }: { pin: string; onAuthError: 
     } catch (error) {
       setError(error instanceof Error ? error.message : "Could not save the product.");
     } finally {
-      setSaving(false);
+      setPending(null);
+    }
+  }
+
+  async function deleteProduct() {
+    if (!draft?.id || !draft.revision || busy) return;
+    const { id, revision } = draft;
+    const product = rows?.find((row) => row.id === id);
+    if (!product || !window.confirm(`Permanently delete “${product.name}” from inventory and the shop?`)) return;
+
+    setPending("delete");
+    setError("");
+    setNotice("");
+    try {
+      const query = new URLSearchParams({ id, revision: String(revision) });
+      const response = await fetch(`/api/products?${query}`, {
+        method: "DELETE",
+        headers: { "X-Admin-Pin": pin },
+      });
+      if (response.status === 401) return onAuthError();
+      const data: { deleted?: boolean; error?: string } = await response.json();
+      if (!response.ok || !data.deleted) throw Error(data.error || "Could not delete the product.");
+      setRows((previous) => previous?.filter((row) => row.id !== id) ?? null);
+      setDraft(null);
+      setNotice(`${product.name} deleted.`);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Could not delete the product.");
+    } finally {
+      setPending(null);
     }
   }
 
@@ -133,7 +162,7 @@ export function ProductsPanel({ pin, onAuthError }: { pin: string; onAuthError: 
     <div className="mx-auto max-w-[1280px] space-y-5 text-slate-900">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div><p className="text-sm font-medium text-slate-600">Studio <span aria-hidden="true" className="mx-1 text-slate-400">/</span> <span className="font-semibold text-slate-900">Products</span></p><h1 className="mt-3 text-[clamp(1.5rem,3vw,2rem)] font-bold leading-tight tracking-tight">Products &amp; inventory</h1><p className="mt-1 text-sm text-slate-600">Manage listings, prices and stock. Published products appear in the shop.</p></div>
-        <button type="button" disabled={!rows || saving} onClick={() => { setDraft(blank()); setError(""); setNotice(""); }} className="min-h-11 rounded-lg bg-[#ffc400] px-4 py-2 text-sm font-bold text-slate-950 hover:bg-[#efb900] disabled:opacity-50">New product</button>
+        <button type="button" disabled={!rows || busy} onClick={() => { setDraft(blank()); setError(""); setNotice(""); }} className="min-h-11 rounded-lg bg-[#ffc400] px-4 py-2 text-sm font-bold text-slate-950 hover:bg-[#efb900] disabled:opacity-50">New product</button>
       </div>
       <dl className="grid grid-cols-2 overflow-hidden rounded-xl border border-slate-200 bg-white sm:grid-cols-4">
         {([["Products", all.length], ["Published", all.filter((row) => row.published).length], ["Low stock", all.filter((row) => row.stock > 0 && row.stock <= 5).length], ["Out of stock", all.filter((row) => row.stock === 0).length]] as const).map(([label, value]) => <div className="border-slate-200 px-4 py-3 odd:border-r nth-[n+3]:border-t sm:border-t-0 sm:not-last:border-r" key={label}><dt className="text-sm text-slate-600">{label}</dt><dd className={`mt-1 text-2xl font-bold tabular-nums ${label === "Published" ? "text-green-800" : label === "Low stock" ? "text-amber-800" : label === "Out of stock" ? "text-red-700" : ""}`}>{rows ? value : "—"}</dd></div>)}
@@ -143,7 +172,7 @@ export function ProductsPanel({ pin, onAuthError }: { pin: string; onAuthError: 
       {draft && (
         <form onSubmit={save} className="rounded-xl border border-slate-200 bg-white p-4">
           <h2 className="mb-4 text-lg font-semibold">{draft.id ? "Edit product" : "New product"}</h2>
-          <fieldset disabled={saving} className="grid min-w-0 gap-3 sm:grid-cols-2">
+          <fieldset disabled={busy} className="grid min-w-0 gap-3 sm:grid-cols-2">
             <label className="space-y-1 text-sm">Product name<input className={field} value={draft.name} onChange={(e) => editField("name", e.target.value)} maxLength={120} required /></label>
             <label className="space-y-1 text-sm">SKU<input className={field} value={draft.sku} onChange={(e) => editField("sku", e.target.value)} maxLength={40} pattern="[A-Za-z0-9][A-Za-z0-9_\-]{0,39}" required /></label>
             <label className="space-y-1 text-sm">Category<select className={field} value={draft.category} onChange={(e) => editField("category", e.target.value)}>{productCategories.map((category) => <option key={category}>{category}</option>)}</select></label>
@@ -168,7 +197,15 @@ export function ProductsPanel({ pin, onAuthError }: { pin: string; onAuthError: 
             </div>
             <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={draft.published} onChange={(e) => editField("published", e.target.checked)} />Publish in the shop</label>
           </fieldset>
-          <div className="mt-4 flex gap-2"><button type="submit" className={button} disabled={saving}>{saving ? "Saving…" : "Save product"}</button><button type="button" className={button} disabled={saving} onClick={() => setDraft(null)}>Cancel</button></div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="submit" className={button} disabled={busy}>{pending === "save" ? "Saving…" : "Save product"}</button>
+            <button type="button" className={button} disabled={busy} onClick={() => setDraft(null)}>Cancel</button>
+            {draft.id && (
+              <button type="button" className="min-h-9 rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 sm:ml-auto" disabled={busy} onClick={() => void deleteProduct()}>
+                {pending === "delete" ? "Deleting…" : "Delete product"}
+              </button>
+            )}
+          </div>
         </form>
       )}
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -187,7 +224,7 @@ export function ProductsPanel({ pin, onAuthError }: { pin: string; onAuthError: 
               <td className="whitespace-nowrap p-3 font-semibold tabular-nums">{money(row.price)}</td>
               <td className={`whitespace-nowrap p-3 font-semibold tabular-nums ${row.stock === 0 ? "text-red-700" : row.stock <= 5 ? "text-amber-800" : "text-green-800"}`}>{row.stock}{row.stock === 0 ? " · Out of stock" : row.stock <= 5 ? " · Low" : ""}</td>
               <td className="p-3"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${row.published ? "bg-green-100 text-green-900" : "bg-slate-100 text-slate-700"}`}>{row.published ? "Published" : "Draft"}</span></td>
-              <td className="p-3"><button type="button" disabled={saving} className={button} onClick={() => edit(row)} aria-label={`Edit ${row.name}`}>Edit</button></td>
+              <td className="p-3"><button type="button" disabled={busy} className={button} onClick={() => edit(row)} aria-label={`Edit ${row.name}`}>Edit</button></td>
             </tr>)}</tbody>
           </table>
         </div>
