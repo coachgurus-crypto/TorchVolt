@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import Script from "next/script";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, ShoppingBag } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { BRAND, telUrl } from "@/lib/constants";
@@ -12,6 +13,16 @@ import { ProductPhoto, useOpenCart } from "../shop-shell";
 
 type PaymentMode = "test" | "live" | "unavailable";
 type PaymentStatus = "paid" | "paid_review" | "pending" | "failed" | "abandoned" | "reversed";
+type Fulfillment = "pickup" | "delivery";
+type PaymentSession = { authorizationUrl: string; accessCode?: string; reference: string };
+
+declare global {
+  interface Window {
+    PaystackPop?: new () => {
+      resumeTransaction: (code: string, callbacks: { onSuccess: () => void; onCancel: () => void; onError: () => void }) => void;
+    };
+  }
+}
 
 export function Checkout() {
   const reference = useSearchParams().get("reference");
@@ -25,7 +36,7 @@ export function Checkout() {
 }
 
 function PaymentResult({ reference }: { reference: string }) {
-  const [payment, setPayment] = useState<{ status: PaymentStatus; mode: PaymentMode; amount: number }>();
+  const [payment, setPayment] = useState<{ status: PaymentStatus; mode: PaymentMode; amount: number; fulfillment: Fulfillment }>();
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -58,7 +69,7 @@ function PaymentResult({ reference }: { reference: string }) {
   return (
     <div className="shop-checkout-card shop-payment-result" aria-live="polite">
       <h2>{paid ? paid.mode === "test" ? "Test payment confirmed" : "Payment confirmed" : failed ? "Payment did not complete" : error ? "Unable to confirm payment" : status === "pending" ? "Payment is pending" : "Checking payment…"}</h2>
-      {paid && <p>{money(paid.amount / 100)} · {paid.mode === "test" ? "No money was charged." : status === "paid_review" ? "Your order needs an inventory review. Contact TorchVolt before coming to collect it." : "Contact TorchVolt with your reference to arrange pickup."}</p>}
+      {paid && <p>{money(paid.amount / 100)} · {paid.mode === "test" ? "No money was charged." : status === "paid_review" ? "Your order needs an inventory review. Contact TorchVolt with your reference." : paid.fulfillment === "delivery" ? "TorchVolt will contact you to arrange delivery." : "Contact TorchVolt with your reference to arrange pickup."}</p>}
       {failed && <p>You can return to checkout to try again.</p>}
       {status === "pending" && <p>Check the status again before starting a new payment.</p>}
       {error && <p role="alert">{error}</p>}
@@ -71,28 +82,57 @@ function PaymentResult({ reference }: { reference: string }) {
 }
 
 function CheckoutForm() {
+  const router = useRouter();
   const { count, lines, subtotal } = useCart();
   const { mode } = useCatalog();
   const openCart = useOpenCart();
   const [paymentMode, setPaymentMode] = useState<PaymentMode>();
+  const [deliveryFee, setDeliveryFee] = useState<number>();
+  const [fulfillment, setFulfillment] = useState<Fulfillment>("pickup");
+  const [delivery, setDelivery] = useState({ name: "", phone: "", address: "", area: "" });
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [fallback, setFallback] = useState<PaymentSession>();
 
   useEffect(() => {
     const controller = new AbortController();
     void fetch("/api/checkout", { signal: controller.signal })
       .then((response) => response.json())
-      .then((data) => { if (!controller.signal.aborted) setPaymentMode(data.mode ?? "unavailable"); })
+      .then((data) => {
+        if (controller.signal.aborted) return;
+        setPaymentMode(data.mode ?? "unavailable");
+        if (Number.isSafeInteger(data.deliveryFee) && data.deliveryFee >= 0) setDeliveryFee(data.deliveryFee);
+      })
       .catch(() => { if (!controller.signal.aborted) setPaymentMode("unavailable"); });
     return () => controller.abort();
   }, []);
 
   const canPay = mode === "live" && (paymentMode === "test" || paymentMode === "live");
+  const isDelivery = fulfillment === "delivery";
+  const total = subtotal + (isDelivery ? deliveryFee ?? 0 : 0);
+
+  function openPayment(session: PaymentSession) {
+    const confirmation = "/shop/checkout?" + new URLSearchParams({ reference: session.reference });
+    const showFallback = () => {
+      setFallback(session);
+      setBusy(false);
+    };
+    if (!window.PaystackPop || !session.accessCode) return showFallback();
+    try {
+      new window.PaystackPop().resumeTransaction(session.accessCode, {
+        onSuccess: () => router.replace(confirmation),
+        onCancel: () => { setBusy(false); setError("Payment window closed."); },
+        onError: showFallback,
+      });
+    } catch {
+      showFallback();
+    }
+  }
 
   async function startPayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!canPay || busy || !lines.length) return;
+    if (!canPay || busy || fallback || !lines.length) return;
     setBusy(true);
     setError("");
     try {
@@ -100,12 +140,12 @@ function CheckoutForm() {
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, items }),
+        body: JSON.stringify({ email, items, fulfillment, ...(isDelivery ? { delivery, deliveryFee } : {}) }),
       });
       const data = await response.json();
       if (!response.ok || !data.authorizationUrl) throw Error(data.error || "Could not start payment.");
       try { sessionStorage.setItem("torchvolt.payment." + data.reference, JSON.stringify(items)); } catch { /* Payment can continue without cart cleanup. */ }
-      window.location.assign(data.authorizationUrl);
+      openPayment(data);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Could not start payment.");
       setBusy(false);
@@ -120,27 +160,48 @@ function CheckoutForm() {
 
   return (
     <>
+      {canPay && <Script src="https://js.paystack.co/v2/inline.js" />}
       {mode === "demo" && <p className="shop-demo-note">Sample catalog. Online payment is unavailable.</p>}
       {mode !== "demo" && paymentMode === "test" && <p className="shop-demo-note">Paystack test mode. No money will be charged.</p>}
       <div className="shop-checkout-grid">
         <form id="paystack-checkout" className="shop-checkout-card" onSubmit={startPayment}>
-          <h2>Pickup</h2>
-          <p>{BRAND.address}, Ibadan</p>
+          <fieldset disabled={busy || !!fallback}>
+            <legend>How would you like your order?</legend>
+            <label className="shop-choice"><input type="radio" name="fulfillment" checked={!isDelivery} onChange={() => setFulfillment("pickup")} /><span><strong>Pickup</strong><small>{BRAND.address}, Ibadan</small></span></label>
+            {deliveryFee !== undefined && <label className="shop-choice"><input type="radio" name="fulfillment" checked={isDelivery} onChange={() => setFulfillment("delivery")} /><span><strong>Home delivery</strong><small>Ibadan only · {money(deliveryFee)}</small></span></label>}
+          </fieldset>
           {canPay ? (
-            <label className="shop-checkout-email">
-              Email address
-              <input type="email" autoComplete="email" maxLength={254} value={email} disabled={busy} required onChange={(event) => setEmail(event.target.value)} />
-            </label>
+            <fieldset disabled={busy || !!fallback}>
+              <label className="shop-checkout-field">
+                Email address
+                <input type="email" autoComplete="email" maxLength={254} value={email} required onChange={(event) => setEmail(event.target.value)} />
+              </label>
+              {isDelivery && (
+                <>
+                  <label className="shop-checkout-field">Recipient name<input autoComplete="shipping name" maxLength={120} value={delivery.name} required onChange={(event) => setDelivery({ ...delivery, name: event.target.value })} /></label>
+                  <label className="shop-checkout-field">Phone number<input type="tel" autoComplete="shipping tel" maxLength={24} value={delivery.phone} required onChange={(event) => setDelivery({ ...delivery, phone: event.target.value })} /></label>
+                  <label className="shop-checkout-field">Street address<input autoComplete="shipping address-line1" maxLength={250} value={delivery.address} required onChange={(event) => setDelivery({ ...delivery, address: event.target.value })} /></label>
+                  <label className="shop-checkout-field">Area or neighbourhood in Ibadan<input autoComplete="shipping address-level3" maxLength={100} value={delivery.area} required onChange={(event) => setDelivery({ ...delivery, area: event.target.value })} /></label>
+                </>
+              )}
+            </fieldset>
           ) : <p role="status">{paymentMode === undefined && mode !== "demo" ? "Checking payment availability…" : "Online payment is currently unavailable."}</p>}
           {error && <p className="shop-payment-error" role="alert">{error}</p>}
         </form>
         <aside className="shop-checkout-card" aria-label="Order summary">
-          <div className="shop-summary-heading"><h2>Order summary</h2><button type="button" className="shop-link" disabled={busy} onClick={() => openCart()}>Edit cart</button></div>
+          <div className="shop-summary-heading"><h2>Order summary</h2><button type="button" className="shop-link" disabled={busy || !!fallback} onClick={() => openCart()}>Edit cart</button></div>
           <ul className="shop-checkout-lines">
             {lines.map(({ product, quantity }) => <li key={product.id}><ProductPhoto product={product} /><div><strong>{product.name}</strong><span>Qty {quantity}</span></div><strong>{money(product.price * quantity)}</strong></li>)}
           </ul>
-          <p className="shop-total"><strong>Total</strong><strong>{money(subtotal)}</strong></p>
-          <button className="shop-btn shop-gold" type="submit" form="paystack-checkout" disabled={!canPay || busy}>{busy ? "Opening Paystack…" : "Pay with Paystack"}<ArrowRight size={18} aria-hidden="true" /></button>
+          {isDelivery && <p className="shop-total"><span>Ibadan delivery</span><span>{money(deliveryFee ?? 0)}</span></p>}
+          <p className="shop-total"><strong>Total</strong><strong>{money(total)}</strong></p>
+          {fallback ? (
+            <>
+              <p className="shop-muted" role="status">The Paystack window couldn’t open here.</p>
+              <a className="shop-btn shop-gold" href={fallback.authorizationUrl}>Continue on Paystack<ArrowRight size={18} aria-hidden="true" /></a>
+              <button className="shop-link" type="button" onClick={() => setFallback(undefined)}>Back to checkout</button>
+            </>
+          ) : <button className="shop-btn shop-gold" type="submit" form="paystack-checkout" disabled={!canPay || busy}>{busy ? "Opening Paystack…" : "Pay with Paystack"}<ArrowRight size={18} aria-hidden="true" /></button>}
         </aside>
       </div>
     </>

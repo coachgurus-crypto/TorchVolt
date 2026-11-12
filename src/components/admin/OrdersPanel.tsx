@@ -10,6 +10,8 @@ type Order = {
   mode: "test" | "live";
   status: "paid" | "paid_review";
   paid_at: string;
+  delivery_fee: number;
+  delivery_details: { name: string; phone: string; address: string; area: string; city: string; state: string } | null;
   items: { id: string; name: string; sku: string; quantity: number; price: number }[];
 };
 
@@ -36,7 +38,7 @@ export function OrdersPanel({ pin, onAuthError }: { pin: string; onAuthError: ()
   return (
     <div className="mx-auto max-w-[1280px] space-y-4 text-slate-900">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><h1 className="text-2xl font-bold">Orders</h1><p className="mt-1 text-sm text-slate-600">Latest 100 confirmed Paystack payments for pickup.</p></div>
+        <div><h1 className="text-2xl font-bold">Orders</h1><p className="mt-1 text-sm text-slate-600">Latest 100 confirmed Paystack payments.</p></div>
         <button type="button" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold" onClick={() => { setError(""); setOrders(undefined); setRefresh((value) => value + 1); }}>Refresh</button>
       </div>
       {error ? <p role="alert" className="text-red-700">{error}</p> : !orders ? <p role="status">Loading orders…</p> : !orders.length ? <p>No confirmed payments yet.</p> : orders.map((order) => (
@@ -52,6 +54,13 @@ export function OrdersPanel({ pin, onAuthError }: { pin: string; onAuthError: ()
           <ul className="mt-3 space-y-1 border-t border-slate-200 pt-2">
             {order.items.map((item) => <li key={item.id}>{item.quantity} × {item.name} ({item.sku}) · {money(item.price * item.quantity)}</li>)}
           </ul>
+          {order.delivery_details ? (
+            <div className="mt-3 break-words border-t border-slate-200 pt-2">
+              <h3 className="font-semibold">Home delivery · {money(order.delivery_fee / 100)}</h3>
+              <p>{order.delivery_details.name} · <a className="underline" href={`tel:${order.delivery_details.phone}`}>{order.delivery_details.phone}</a></p>
+              <p>{order.delivery_details.address}, {order.delivery_details.area}, {order.delivery_details.city}, {order.delivery_details.state}</p>
+            </div>
+          ) : <p className="mt-3 font-semibold">Pickup</p>}
         </article>
       ))}
     </div>

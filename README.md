@@ -32,12 +32,12 @@ Product photos can be uploaded from the product editor as JPEG, PNG or WebP file
 
 ### Paystack checkout
 
-1. Apply `migrations/0008_shop_orders.sql` to the checkout environment's D1 database.
+1. Apply `migrations/0008_shop_orders.sql` and `migrations/0009_shop_order_delivery.sql` to the checkout environment's D1 database before deploying the checkout code.
 2. Add `PAYSTACK_SECRET_KEY` to the Cloudflare Pages environment as an encrypted secret. Start with an `sk_test_` key. The shop labels test payments and leaves stock unchanged for them.
 3. In the matching Paystack mode, set the webhook to `https://<shop-host>/api/paystack-webhook`. If you create a `whsec_` signing secret, set it in Cloudflare as `PAYSTACK_WEBHOOK_SECRET`. Without that setting, the endpoint uses Paystack's legacy signature.
 4. Complete a test purchase, verify the callback and webhook, and check **Admin → Orders** before switching the production environment to live credentials and configuring its live webhook.
 
-Checkout is for pickup in Ibadan. Prices are checked before redirecting to Paystack. Stock is deducted once after a confirmed live payment. If stock ran short during payment, the paid order appears in **Admin → Orders** for manual review and the customer is asked to contact TorchVolt.
+Checkout supports pickup and home delivery within Ibadan for ₦4,000. TorchVolt checks prices, stock, and the delivery fee before opening Paystack's payment window. Delivery details are available in **Admin → Orders** after payment. Stock is deducted once after a confirmed live payment. If stock ran short during payment, the paid order appears in **Admin → Orders** for manual review and the customer is asked to contact TorchVolt.
 
 To learn more about Next.js, take a look at the following resources:
 

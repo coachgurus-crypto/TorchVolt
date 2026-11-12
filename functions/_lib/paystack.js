@@ -22,7 +22,7 @@ export async function paystack(key, path, body) {
 }
 
 export function findOrder(db, reference) {
-  return db.prepare("SELECT reference, amount, mode, status FROM shop_orders WHERE reference = ?").bind(reference).first();
+  return db.prepare("SELECT reference, amount, mode, status, CASE WHEN delivery_details IS NULL THEN 'pickup' ELSE 'delivery' END AS fulfillment FROM shop_orders WHERE reference = ?").bind(reference).first();
 }
 
 export async function recordPayment(db, order, payment) {

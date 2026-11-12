@@ -54,7 +54,7 @@ export function ShopShell({ children }: { children: ReactNode }) {
         <footer className="shop-footer">
           <div className="shop-wrap">
             <Link href="/shop">TorchVolt Shop</Link>
-            <span>{mode === "demo" ? "Demo catalog · sample prices" : "Ibadan pickup"}</span>
+            <span>{mode === "demo" ? "Demo catalog · sample prices" : "Ibadan pickup and delivery"}</span>
             <Link href="/size">Solar calculator</Link>
             <address className="w-full not-italic">{BRAND.address}</address>
           </div>
@@ -87,7 +87,7 @@ export function ShopShell({ children }: { children: ReactNode }) {
             </div>
             <div className="shop-drawer-summary">
               <p className="shop-total"><strong>Subtotal</strong><strong>{money(subtotal)}</strong></p>
-              <p className="shop-muted">{mode === "demo" ? "Sample prices · demo cart" : "Pickup in Ibadan · stock checked at checkout"}</p>
+              <p className="shop-muted">{mode === "demo" ? "Sample prices · demo cart" : "Ibadan pickup and delivery · stock checked at checkout"}</p>
               {count > 0 && <Link className="shop-btn shop-gold" href="/shop/checkout" onClick={close}>Continue to checkout<ArrowRight size={19} aria-hidden="true" /></Link>}
               <button type="button" className="shop-link" onClick={close}>Keep shopping</button>
             </div>
