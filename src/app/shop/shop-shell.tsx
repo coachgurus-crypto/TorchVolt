@@ -8,6 +8,7 @@ import { changeQuantity, useCart } from "./cart-store";
 import { maxQuantity, money, type Product } from "./catalog";
 
 import { useCatalog } from "./catalog-provider";
+import { BRAND } from "@/lib/constants";
 
 const OpenCart = createContext<(product?: Product) => void>(() => {});
 export const useOpenCart = () => useContext(OpenCart);
@@ -50,7 +51,14 @@ export function ShopShell({ children }: { children: ReactNode }) {
           </div>
         </header>
         <div id="shop-content">{children}</div>
-        <footer className="shop-footer"><div className="shop-wrap"><Link href="/shop">TorchVolt Shop</Link><span>{mode === "demo" ? "Demo catalog · sample prices" : "Demo checkout · no orders or payments"}</span><Link href="/size">Solar calculator</Link></div></footer>
+        <footer className="shop-footer">
+          <div className="shop-wrap">
+            <Link href="/shop">TorchVolt Shop</Link>
+            <span>{mode === "demo" ? "Demo catalog · sample prices" : "Demo checkout · no orders or payments"}</span>
+            <Link href="/size">Solar calculator</Link>
+            <address className="w-full not-italic">{BRAND.address}</address>
+          </div>
+        </footer>
         <dialog ref={drawer} className="shop-drawer" aria-labelledby="shop-cart-title" onClose={() => opener.current?.focus()} onClick={(event) => { if (event.target === event.currentTarget) close(); }}>
           <div className="shop-drawer-inner">
             <header className="shop-drawer-heading">

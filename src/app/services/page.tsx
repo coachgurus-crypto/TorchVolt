@@ -162,7 +162,11 @@ export default function ServicesPage() {
         <div className="svc-wrap">
           <div className="svc-split">
             <div><p className="svc-kicker">Let’s talk solar</p><h2>Ready to install solar?</h2><p>Tell us what you want to power. We’ll help you find the right system.</p></div>
-            <div><div className="svc-actions"><Quote /><WhatsApp /></div><a className="svc-phone" href={telUrl()}><Phone size={18} aria-hidden="true" />{BRAND.phoneDisplay}</a></div>
+            <div>
+              <div className="svc-actions"><Quote /><WhatsApp /></div>
+              <a className="svc-phone" href={telUrl()}><Phone size={18} aria-hidden="true" />{BRAND.phoneDisplay}</a>
+              <address className="mt-2 text-sm leading-6 not-italic">{BRAND.address}</address>
+            </div>
           </div>
           <div className="svc-footer-bottom"><Wordmark /><span>Solar solutions for homes and businesses in Ibadan.</span><Link href="/blog">Blog</Link></div>
         </div>

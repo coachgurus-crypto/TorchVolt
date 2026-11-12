@@ -2,6 +2,7 @@ export const BRAND = {
   name: "TorchVolt",
   tagline: "Solar for your home or office — with a free quote.",
   city: "Ibadan · Lagos · Abuja",
+  address: "OWOADE HOUSE ANNEX, A1 AKINYEMI BUS STOP RINGROAD",
   phoneE164: "2348165452992",
   phoneDisplay: "+234 816 545 2992",
   whatsappE164: "2348165452992",

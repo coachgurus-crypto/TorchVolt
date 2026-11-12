@@ -556,7 +556,9 @@ export function HomePageContent() {
               <a href={telUrl()} className="tv-footer-phone">
                 {BRAND.phoneDisplay}
               </a>
-              <p>Ibadan, Oyo State</p>
+              <address className="mt-2 text-sm leading-6 not-italic">
+                {BRAND.address}<br />Ibadan, Oyo State
+              </address>
             </div>
           </div>
           <div className="tv-footer-bottom">

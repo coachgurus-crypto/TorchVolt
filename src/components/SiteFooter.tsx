@@ -13,6 +13,7 @@ export function SiteFooter() {
           {footer.heading}
         </p>
         <p className="mt-3 max-w-md text-sm leading-6">{footer.body}</p>
+        <address className="mt-3 text-sm leading-6 not-italic">{BRAND.address}</address>
         <div className="mt-8 flex flex-col gap-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
           <Link href="/#size" className="hover:text-white">
             {footer.quoteLink}
