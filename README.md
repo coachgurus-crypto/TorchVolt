@@ -30,6 +30,8 @@ The inventory table is created by `migrations/0006_products.sql`. Apply the migr
 
 Checkout is a demo: cart quantities respect the catalog's reported stock, but checkout does not reserve stock, create an order or take payment.
 
+Product photos can be uploaded from the product editor as JPEG, PNG or WebP files up to 512 KB. Photos are stored with the product in D1 and only published products' uploads are publicly visible. Apply `migrations/0007_product_images.sql` after the inventory migration before deploying upload support. Existing image URLs still work.
+
 To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.

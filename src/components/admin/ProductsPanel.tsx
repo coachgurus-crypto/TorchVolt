@@ -9,11 +9,34 @@ import { money } from "@/app/shop/catalog";
 type Draft = {
   id?: string; revision?: number; sku: string; name: string; category: ProductCategory;
   spec: string; price: string; stock: string; image: string; published: boolean;
+  photo?: File; preview?: string;
 };
 
 const blank = (): Draft => ({ sku: "", name: "", category: "Solar panels", spec: "", price: "", stock: "0", image: "", published: false });
 const field = "studio-field w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900";
 const button = "min-h-9 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 hover:bg-slate-50 disabled:opacity-50";
+
+function InventoryPhoto({ image, pin }: { image: string; pin: string }) {
+  const [preview, setPreview] = useState("");
+  const uploaded = image.startsWith("/api/product-image?");
+  useEffect(() => {
+    if (!uploaded) return;
+    const controller = new AbortController();
+    let url = "";
+    void fetch(image, { signal: controller.signal, headers: { "X-Admin-Pin": pin } })
+      .then((response) => response.ok ? response.blob() : null)
+      .then((blob) => {
+        if (!blob || controller.signal.aborted) return;
+        url = URL.createObjectURL(blob);
+        setPreview(url);
+      })
+      .catch(() => {});
+    return () => { controller.abort(); if (url) URL.revokeObjectURL(url); };
+  }, [image, pin, uploaded]);
+  const src = uploaded ? preview : image;
+  return src ? <Image src={src} alt="" width={48} height={48} unoptimized className="size-full object-cover" />
+    : <Package size={18} aria-hidden="true" />;
+}
 
 export function ProductsPanel({ pin, onAuthError }: { pin: string; onAuthError: () => void }) {
   const [rows, setRows] = useState<InventoryProduct[] | null>(null);
@@ -56,10 +79,14 @@ export function ProductsPanel({ pin, onAuthError }: { pin: string; onAuthError: 
     setError("");
     setNotice("");
     try {
+      const { photo, preview: _preview, ...fields } = draft;
+      const product = JSON.stringify({ ...fields, price: Number(draft.price), stock: Number(draft.stock) });
+      const form = new FormData();
+      if (photo) { form.set("photo", photo); form.set("product", product); }
       const response = await fetch(draft.id ? `/api/products?id=${encodeURIComponent(draft.id)}` : "/api/products", {
         method: draft.id ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json", "X-Admin-Pin": pin },
-        body: JSON.stringify({ ...draft, price: Number(draft.price), stock: Number(draft.stock) }),
+        headers: { "X-Admin-Pin": pin, ...(photo ? {} : { "Content-Type": "application/json" }) },
+        body: photo ? form : product,
       });
       if (response.status === 401) return onAuthError();
       const data: { product?: InventoryProduct; error?: string } = await response.json();
@@ -85,6 +112,23 @@ export function ProductsPanel({ pin, onAuthError }: { pin: string; onAuthError: 
   });
   const editField = (key: keyof Draft, value: string | boolean) => setDraft((current) => current ? { ...current, [key]: value } : current);
 
+  function choosePhoto(file: File | undefined, input: HTMLInputElement) {
+    setError("");
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || !file.size || file.size > 512 * 1024) {
+      input.value = "";
+      setError("Choose a JPEG, PNG or WebP image up to 512 KB.");
+      return;
+    }
+    setDraft((current) => current ? { ...current, photo: file, preview: undefined } : current);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const preview = reader.result;
+      if (typeof preview === "string") setDraft((current) => current?.photo === file ? { ...current, preview } : current);
+    };
+    reader.readAsDataURL(file);
+  }
+
   return (
     <div className="mx-auto max-w-[1280px] space-y-5 text-slate-900">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -106,7 +150,22 @@ export function ProductsPanel({ pin, onAuthError }: { pin: string; onAuthError: 
             <label className="space-y-1 text-sm">Specification<input className={field} value={draft.spec} onChange={(e) => editField("spec", e.target.value)} maxLength={200} /></label>
             <label className="space-y-1 text-sm">Price (₦)<input className={field} type="number" min={1} max={1000000000} step={1} value={draft.price} onChange={(e) => editField("price", e.target.value)} required /></label>
             <label className="space-y-1 text-sm">Stock quantity<input className={field} type="number" min={0} max={1000000} step={1} value={draft.stock} onChange={(e) => editField("stock", e.target.value)} required /></label>
-            <label className="space-y-1 text-sm sm:col-span-2">Image URL or /images/ path<input className={field} value={draft.image} onChange={(e) => editField("image", e.target.value)} maxLength={500} placeholder="https://… or /images/…" /></label>
+            <div className="space-y-2 text-sm sm:col-span-2">
+              <label className="block space-y-1">Upload product image
+                <input key={draft.photo ? "selected" : "empty"} className={field} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => choosePhoto(event.target.files?.[0], event.currentTarget)} />
+              </label>
+              <p className="text-xs text-slate-600">JPEG, PNG or WebP, up to 512 KB. The photo is uploaded when you save the product.</p>
+              {(draft.photo || draft.image) && <div className="flex items-center gap-3">
+                <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-lg bg-slate-100 text-slate-500">
+                  <InventoryPhoto key={draft.preview || draft.image} image={draft.preview || draft.image} pin={pin} />
+                </div>
+                <span className="min-w-0 break-all">{draft.photo?.name || "Current product image"}</span>
+                <button type="button" className={button} onClick={() => setDraft((current) => current ? { ...current, photo: undefined, preview: undefined, image: current.photo ? current.image : "" } : current)}>{draft.photo ? "Clear selection" : "Remove image"}</button>
+              </div>}
+              <label className="block space-y-1">Or use an image URL
+                <input className={field} value={draft.image.startsWith("/api/product-image?") ? "" : draft.image} disabled={!!draft.photo} onChange={(e) => editField("image", e.target.value)} maxLength={500} placeholder="https://… or /images/…" />
+              </label>
+            </div>
             <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={draft.published} onChange={(e) => editField("published", e.target.checked)} />Publish in the shop</label>
           </fieldset>
           <div className="mt-4 flex gap-2"><button type="submit" className={button} disabled={saving}>{saving ? "Saving…" : "Save product"}</button><button type="button" className={button} disabled={saving} onClick={() => setDraft(null)}>Cancel</button></div>
@@ -123,7 +182,7 @@ export function ProductsPanel({ pin, onAuthError }: { pin: string; onAuthError: 
           <table className="w-full min-w-[740px] text-left text-sm">
             <thead className="bg-slate-50 text-xs text-slate-600"><tr>{["Product", "Category", "Price", "Stock", "Status", "Action"].map((title) => <th scope="col" className="p-3" key={title}>{title}</th>)}</tr></thead>
             <tbody>{visible.map((row) => <tr className="border-t border-slate-200" key={row.id}>
-              <th scope="row" className="p-3 font-semibold"><div className="flex items-center gap-3"><div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-slate-100 text-slate-500">{row.image ? <Image src={row.image} alt="" width={48} height={48} unoptimized className="size-full object-cover" /> : <Package size={18} aria-hidden="true" />}</div><div>{row.name}<span className="mt-0.5 block text-xs font-normal text-slate-600">SKU: {row.sku}</span></div></div></th>
+              <th scope="row" className="p-3 font-semibold"><div className="flex items-center gap-3"><div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-slate-100 text-slate-500"><InventoryPhoto key={row.revision} image={row.image} pin={pin} /></div><div>{row.name}<span className="mt-0.5 block text-xs font-normal text-slate-600">SKU: {row.sku}</span></div></div></th>
               <td className="p-3 text-slate-600">{row.category}</td>
               <td className="whitespace-nowrap p-3 font-semibold tabular-nums">{money(row.price)}</td>
               <td className={`whitespace-nowrap p-3 font-semibold tabular-nums ${row.stock === 0 ? "text-red-700" : row.stock <= 5 ? "text-amber-800" : "text-green-800"}`}>{row.stock}{row.stock === 0 ? " · Out of stock" : row.stock <= 5 ? " · Low" : ""}</td>
