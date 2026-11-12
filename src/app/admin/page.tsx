@@ -1,16 +1,17 @@
 "use client";
 
-import { File, House, LockKeyhole, Newspaper, Tag, Users, Zap } from "lucide-react";
+import { File, House, LockKeyhole, Newspaper, Receipt, Tag, Users, Zap } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ContentCms } from "@/components/admin/ContentCms";
 import { CustomersPanel } from "@/components/admin/CustomersPanel";
 import { HomepageEditor } from "@/components/admin/HomepageEditor";
 import { ProductsPanel } from "@/components/admin/ProductsPanel";
+import { OrdersPanel } from "@/components/admin/OrdersPanel";
 import { fetchLeads } from "@/lib/leads";
 
 const PIN_KEY = "torchvolt.admin.pin";
 
-type Tab = "homepage" | "customers" | "blog" | "pages" | "products";
+type Tab = "homepage" | "customers" | "blog" | "pages" | "products" | "orders";
 
 export default function AdminDashboardPage() {
   const [pin, setPin] = useState("");
@@ -100,6 +101,7 @@ export default function AdminDashboardPage() {
               ["blog", "Posts", Newspaper],
               ["pages", "Pages", File],
               ["products", "Products", Tag],
+              ["orders", "Orders", Receipt],
               ["customers", "Customers", Users],
             ] as const
           ).map(([id, label, Icon]) => (
@@ -133,9 +135,11 @@ export default function AdminDashboardPage() {
         </div>
       </aside>
 
-      <section className={`min-w-0 flex-1 ${tab === "products" ? "bg-[#f4f5f7]" : ""}`}>
+      <section className={`min-w-0 flex-1 ${tab === "products" || tab === "orders" ? "bg-[#f4f5f7]" : ""}`}>
         {tab === "products" ? (
           <div className="p-4 md:p-6"><ProductsPanel pin={pin} onAuthError={onAuthError} /></div>
+        ) : tab === "orders" ? (
+          <div className="p-4 md:p-6"><OrdersPanel pin={pin} onAuthError={onAuthError} /></div>
         ) : tab === "customers" ? (
           <div className="p-6 [&_*]:border-white/10 [&_a]:text-zinc-100 [&_article]:bg-[#111113] [&_article]:text-zinc-200 [&_button]:text-zinc-200 [&_h1]:text-zinc-50 [&_h2]:text-zinc-50 [&_p]:text-zinc-400 [&_ul]:border-white/10 [&_ul]:bg-[#111113]">
             <CustomersPanel pin={pin} onAuthError={onAuthError} />

@@ -67,7 +67,7 @@ function ProductView({ product, related, demo }: { product: Product; related: Pr
                 <ShoppingBag size={18} aria-hidden="true" />{!product.stock ? "Out of stock" : !limit ? "Cart limit reached" : "Add to cart"}
               </button>
             </div>
-            <p className="shop-muted">Demo checkout · no orders or payments{demo ? " · sample prices" : ""}</p>
+            <p className="shop-muted">{demo ? "Sample prices · payment unavailable" : "Pickup in Ibadan"}</p>
           </div>
         </section>
         <section className="shop-product-details" aria-labelledby="product-details">

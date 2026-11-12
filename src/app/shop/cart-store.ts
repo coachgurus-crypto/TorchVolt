@@ -33,6 +33,29 @@ function decode(raw: string): Cart {
   } catch { return {}; }
 }
 
+function writeCart(cart: Cart) {
+  fallback = JSON.stringify(cart);
+  try { localStorage.setItem(key, fallback); } catch { /* Use in-memory storage when blocked. */ }
+  window.dispatchEvent(new Event(change));
+}
+
+export function removePurchasedItems(reference: string) {
+  const storageKey = "torchvolt.payment." + reference;
+  try {
+    const stored = sessionStorage.getItem(storageKey);
+    if (!stored) return;
+    const items: { id: string; quantity: number }[] = JSON.parse(stored);
+    const cart = decode(snapshot());
+    for (const { id, quantity } of items) {
+      const remaining = (cart[id] ?? 0) - quantity;
+      if (remaining > 0) cart[id] = remaining;
+      else delete cart[id];
+    }
+    sessionStorage.removeItem(storageKey);
+    writeCart(cart);
+  } catch { /* The payment record is independent of cart storage. */ }
+}
+
 export function changeQuantity(product: Product, delta: number) {
   const { id } = product;
   const cart = decode(snapshot());
@@ -41,9 +64,7 @@ export function changeQuantity(product: Product, delta: number) {
   const next = Math.min(limit, quantity);
   if (next <= 0) delete cart[id];
   else cart[id] = next;
-  fallback = JSON.stringify(cart);
-  try { localStorage.setItem(key, fallback); } catch { /* Use in-memory storage when blocked. */ }
-  window.dispatchEvent(new Event(change));
+  writeCart(cart);
   return next;
 }
 

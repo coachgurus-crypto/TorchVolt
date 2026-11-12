@@ -28,9 +28,16 @@ Open **Admin → Products** to create a listing, set a price in whole naira, and
 
 The inventory table is created by `migrations/0006_products.sql`. Apply the migration to the intended D1 database before enabling this feature there. For local testing, use Wrangler's local D1 and Pages preview with the same persistence directory. Provide a local dashboard PIN via the preview configuration. The static preview alone cannot save inventory.
 
-Checkout is a demo: cart quantities respect the catalog's reported stock, but checkout does not reserve stock, create an order or take payment.
-
 Product photos can be uploaded from the product editor as JPEG, PNG or WebP files up to 512 KB. Photos are stored with the product in D1 and only published products' uploads are publicly visible. Apply `migrations/0007_product_images.sql` after the inventory migration before deploying upload support. Existing image URLs still work.
+
+### Paystack checkout
+
+1. Apply `migrations/0008_shop_orders.sql` to the checkout environment's D1 database.
+2. Add `PAYSTACK_SECRET_KEY` to the Cloudflare Pages environment as an encrypted secret. Start with an `sk_test_` key. The shop labels test payments and leaves stock unchanged for them.
+3. In the matching Paystack mode, set the webhook to `https://<shop-host>/api/paystack-webhook`. If you create a `whsec_` signing secret, set it in Cloudflare as `PAYSTACK_WEBHOOK_SECRET`. Without that setting, the endpoint uses Paystack's legacy signature.
+4. Complete a test purchase, verify the callback and webhook, and check **Admin → Orders** before switching the production environment to live credentials and configuring its live webhook.
+
+Checkout is for pickup in Ibadan. Prices are checked before redirecting to Paystack. Stock is deducted once after a confirmed live payment. If stock ran short during payment, the paid order appears in **Admin → Orders** for manual review and the customer is asked to contact TorchVolt.
 
 To learn more about Next.js, take a look at the following resources:
 

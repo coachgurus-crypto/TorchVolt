@@ -89,6 +89,12 @@
 .shop-checkout-card h2, .shop-checkout-card legend { font-weight: 760; font-size: 23px; }
 .shop-checkout-card h2 + p, .shop-checkout-card legend + p { margin-block: 8px; color: var(--muted); }
 .shop-checkout-card .shop-notice { margin-bottom: 12px; }
+.shop-checkout-email { display: grid; gap: 6px; margin-top: 16px; font-weight: 650; }
+.shop-checkout-email input { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; font-weight: 400; }
+.shop-payment-error { margin-top: 12px; color: #a12626; }
+.shop-payment-result { max-width: 560px; margin-top: 16px; }
+.shop-payment-result > .shop-link { display: inline-block; margin-top: 10px; }
+.shop-payment-reference { overflow-wrap: anywhere; }
 .shop-choice { display: flex; align-items: flex-start; gap: 10px; padding: 12px; margin-top: 10px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
 .shop-choice:has(input:checked) { background: #fff7de; border-color: #b78000; }
 .shop-choice input { margin-top: 5px; accent-color: var(--green); }
