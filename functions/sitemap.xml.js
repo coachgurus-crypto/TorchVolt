@@ -8,7 +8,7 @@ function liveWhere() {
 export async function onRequestGet(context) {
   const origin = new URL(context.request.url).origin;
   const now = new Date().toISOString();
-  const urls = [`${origin}/`, `${origin}/blog`, `${origin}/size`];
+  const urls = [`${origin}/`, `${origin}/blog`, `${origin}/size`, `${origin}/services`];
 
   const { results: posts } = await context.env.DB.prepare(
     `SELECT * FROM contents WHERE ${liveWhere()} ORDER BY updated_at DESC LIMIT 500`,

@@ -11,6 +11,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center justify-between px-4">
         <Logo />
         <nav className="flex items-center gap-2 sm:gap-3">
+          <Link href="/services" className="rounded-full px-2 py-2 text-sm font-medium text-slate-600 hover:text-navy sm:px-3.5">Services</Link>
           <Link
             href="/blog"
             className="hidden rounded-full px-3.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-navy sm:inline-flex"

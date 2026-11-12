@@ -3,7 +3,7 @@ import path from "node:path";
 
 /** Next `output: "export"` emits `admin.html` + `admin/` (RSC). Cloudflare
  *  serves `/admin` cleanly when `admin/index.html` exists. */
-const pages = ["admin", "size", "blog", "read", "view"];
+const pages = ["admin", "size", "blog", "read", "view", "services"];
 const outDir = path.resolve("out");
 
 for (const page of pages) {

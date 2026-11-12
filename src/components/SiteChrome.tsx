@@ -6,8 +6,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { HomepageCopyProvider } from "@/lib/useHomepageCopy";
 
 export function SiteChrome({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const pathname = usePathname().replace(/\/+$/, "") || "/";
   const studio = pathname === "/admin" || pathname.startsWith("/admin/");
+  const hasOwnChrome = pathname === "/" || pathname === "/services";
 
   if (studio) {
     return <main className="min-h-full">{children}</main>;
@@ -15,9 +16,9 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <HomepageCopyProvider>
-      {pathname !== "/" && <SiteHeader />}
+      {!hasOwnChrome && <SiteHeader />}
       <main className="flex-1">{children}</main>
-      {pathname !== "/" && <SiteFooter />}
+      {!hasOwnChrome && <SiteFooter />}
     </HomepageCopyProvider>
   );
 }

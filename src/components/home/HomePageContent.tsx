@@ -143,6 +143,7 @@ export function HomePageContent() {
               Solutions
               <ChevronDown size={15} />
             </a>
+            <Link href="/services">Services</Link>
             <a href="#how">{copy.header.howItWorks}</a>
             <a href="#faqs">FAQs</a>
           </nav>
@@ -179,6 +180,7 @@ export function HomePageContent() {
                 {label}
               </a>
             ))}
+            <Link href="/services" onClick={() => setMenuOpen(false)}>Services</Link>
             <Link href="/blog">Blog</Link>
           </nav>
         )}
@@ -540,6 +542,7 @@ export function HomePageContent() {
               <span className="tv-short-rule" />
               <h3>Explore</h3>
               <a href="#solutions">Solutions</a>
+              <Link href="/services">Services</Link>
               <a href="#how">How it works</a>
               <a href="#faqs">FAQs</a>
               <Link href="/blog">Blog</Link>

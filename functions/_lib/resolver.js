@@ -68,7 +68,7 @@ export function isCmsCandidatePath(pathname) {
   if (!path) return false;
   const head = path.split("/")[0];
   if (
-    ["admin", "api", "size", "blog", "read", "view"].includes(path) ||
+    ["admin", "api", "size", "blog", "read", "view", "services"].includes(path) ||
     head === "api" ||
     head.startsWith("_")
   ) {
