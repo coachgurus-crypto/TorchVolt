@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Script from "next/script";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, ShoppingBag } from "lucide-react";
+import { ArrowLeft, ArrowRight, LockKeyhole, ShoppingBag } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { BRAND, telUrl } from "@/lib/constants";
 import { removePurchasedItems, useCart } from "../cart-store";
@@ -165,35 +165,37 @@ function CheckoutForm() {
       {mode !== "demo" && paymentMode === "test" && <p className="shop-demo-note">Paystack test mode. No money will be charged.</p>}
       <div className="shop-checkout-grid">
         <form id="paystack-checkout" className="shop-checkout-card" onSubmit={startPayment}>
-          <fieldset disabled={busy || !!fallback}>
+          {canPay ? (
+            <label className="shop-checkout-field">
+              Email address
+              <input type="email" autoComplete="email" maxLength={254} value={email} required disabled={busy || !!fallback} onChange={(event) => setEmail(event.target.value)} />
+            </label>
+          ) : <p role="status">{paymentMode === undefined && mode !== "demo" ? "Checking payment availability…" : "Online payment is currently unavailable."}</p>}
+          <fieldset className="shop-fulfillment" disabled={busy || !!fallback}>
             <legend>How would you like your order?</legend>
+            <div className="shop-fulfillment-options">
             <label className="shop-choice"><input type="radio" name="fulfillment" checked={!isDelivery} onChange={() => setFulfillment("pickup")} /><span><strong>Pickup</strong><small>{BRAND.address}, Ibadan</small></span></label>
             {deliveryFee !== undefined && <label className="shop-choice"><input type="radio" name="fulfillment" checked={isDelivery} onChange={() => setFulfillment("delivery")} /><span><strong>Home delivery</strong><small>Ibadan only · {money(deliveryFee)}</small></span></label>}
+            </div>
           </fieldset>
-          {canPay ? (
-            <fieldset disabled={busy || !!fallback}>
-              <label className="shop-checkout-field">
-                Email address
-                <input type="email" autoComplete="email" maxLength={254} value={email} required onChange={(event) => setEmail(event.target.value)} />
-              </label>
-              {isDelivery && (
-                <>
+          {canPay && isDelivery && (
+            <fieldset className="shop-delivery-fields" aria-label="Delivery address" disabled={busy || !!fallback}>
                   <label className="shop-checkout-field">Recipient name<input autoComplete="shipping name" maxLength={120} value={delivery.name} required onChange={(event) => setDelivery({ ...delivery, name: event.target.value })} /></label>
                   <label className="shop-checkout-field">Phone number<input type="tel" autoComplete="shipping tel" maxLength={24} value={delivery.phone} required onChange={(event) => setDelivery({ ...delivery, phone: event.target.value })} /></label>
                   <label className="shop-checkout-field">Street address<input autoComplete="shipping address-line1" maxLength={250} value={delivery.address} required onChange={(event) => setDelivery({ ...delivery, address: event.target.value })} /></label>
                   <label className="shop-checkout-field">Area or neighbourhood in Ibadan<input autoComplete="shipping address-level3" maxLength={100} value={delivery.area} required onChange={(event) => setDelivery({ ...delivery, area: event.target.value })} /></label>
-                </>
-              )}
+                  <label className="shop-checkout-field">City<input value="Ibadan, Oyo" readOnly /></label>
             </fieldset>
-          ) : <p role="status">{paymentMode === undefined && mode !== "demo" ? "Checking payment availability…" : "Online payment is currently unavailable."}</p>}
+          )}
           {error && <p className="shop-payment-error" role="alert">{error}</p>}
         </form>
-        <aside className="shop-checkout-card" aria-label="Order summary">
+        <aside className="shop-checkout-card shop-checkout-summary" aria-label="Order summary">
           <div className="shop-summary-heading"><h2>Order summary</h2><button type="button" className="shop-link" disabled={busy || !!fallback} onClick={() => openCart()}>Edit cart</button></div>
           <ul className="shop-checkout-lines">
             {lines.map(({ product, quantity }) => <li key={product.id}><ProductPhoto product={product} /><div><strong>{product.name}</strong><span>Qty {quantity}</span></div><strong>{money(product.price * quantity)}</strong></li>)}
           </ul>
-          {isDelivery && <p className="shop-total"><span>Ibadan delivery</span><span>{money(deliveryFee ?? 0)}</span></p>}
+          <p className="shop-summary-cost"><span>Item subtotal</span><span>{money(subtotal)}</span></p>
+          <p className="shop-summary-cost"><span>{isDelivery ? "Ibadan delivery" : "Pickup"}</span><span>{isDelivery ? money(deliveryFee ?? 0) : "Free"}</span></p>
           <p className="shop-total"><strong>Total</strong><strong>{money(total)}</strong></p>
           {fallback ? (
             <>
@@ -201,7 +203,8 @@ function CheckoutForm() {
               <a className="shop-btn shop-gold" href={fallback.authorizationUrl}>Continue on Paystack<ArrowRight size={18} aria-hidden="true" /></a>
               <button className="shop-link" type="button" onClick={() => setFallback(undefined)}>Back to checkout</button>
             </>
-          ) : <button className="shop-btn shop-gold" type="submit" form="paystack-checkout" disabled={!canPay || busy}>{busy ? "Opening Paystack…" : "Pay with Paystack"}<ArrowRight size={18} aria-hidden="true" /></button>}
+          ) : <button className="shop-btn shop-gold" type="submit" form="paystack-checkout" disabled={!canPay || busy}>{busy ? "Opening Paystack…" : `Pay ${money(total)}`}<ArrowRight size={18} aria-hidden="true" /></button>}
+          <p className="shop-payment-provider"><LockKeyhole size={15} aria-hidden="true" /> <span>Payments handled by <strong>Paystack</strong></span></p>
         </aside>
       </div>
     </>
